@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bellman-Kalaba — drumuri minime către un vârf (matricial)</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--blue-bg);color:var(--blue-d)}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}.codeblock .var{color:var(--teal-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:90px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.blue{background:var(--blue-bg);border-color:var(--blue-d)}
+  .note.blue b{color:var(--blue-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:330px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:1.8;fill:none}
+  .ew{font-family:var(--mono);font-size:12px;font-weight:600;fill:#3a3833}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0}
+  .node-c.target{fill:var(--blue-d);stroke:var(--blue);stroke-width:3}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.mat{border-collapse:collapse;font-family:var(--mono);font-size:13px;margin:8px 0}
+  table.mat th,table.mat td{border:0.5px solid var(--line);padding:6px 11px;text-align:center;min-width:34px}
+  table.mat th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.mat td.diag{background:var(--panel2);color:var(--muted)}
+  table.mat td.col{background:var(--blue-bg);color:var(--blue-d);font-weight:700}
+  .vectors{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:flex-start}
+  table.vec{border-collapse:collapse;font-family:var(--mono);font-size:13px}
+  table.vec th{background:var(--panel2);color:var(--muted);font-weight:600;border:0.5px solid var(--line);padding:5px 9px;font-size:11px}
+  table.vec td{border:0.5px solid var(--line);padding:5px 11px;text-align:center;min-width:32px}
+  table.vec td.changed{background:var(--green-bg);color:var(--green-d);font-weight:700}
+  table.vec td.cur{background:var(--blue-bg)}
+  table.vec.faded{opacity:.45}
+  .vlabel{font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;margin-bottom:3px}
+  .calc{background:#f7f5ef;border:0.5px solid var(--line);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:12px;margin-top:10px;line-height:1.8;overflow-x:auto;white-space:pre}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Algoritmul Bellman-Kalaba</h1>
+  <div class="sub">Drumuri minime de la TOATE vârfurile către UN vârf · metodă matricială · seminar 2</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ce-l face diferit</a>
+  <a href="#matrice">Matricea A</a>
+  <a href="#formula">Formula iterativă</a>
+  <a href="#viz">Calcul pas cu pas</a>
+  <a href="#cand">Când oprești</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce-l face diferit de Bellman-Ford și Dijkstra</h2>
+  <p class="lead">Bellman-Kalaba rezolvă o problemă „întoarsă": găsește drumul de cost minim de la <b>toate vârfurile către un vârf fix</b> (destinația), nu de la o sursă către toate. Și o face <b>matricial</b> — fără coadă, fără relaxări una câte una, ci recalculând un vector întreg la fiecare pas.</p>
+  <div class="grid2">
+    <div class="card" style="border-color:var(--blue-d)">
+      <h3 style="color:var(--blue-d)">Direcția</h3>
+      <p class="muted">Dijkstra/Bellman-Ford: <b>de la</b> o sursă → spre toate. Bellman-Kalaba: de la toate → <b>către</b> o destinație fixă (în exemplu, vârful 7). Răspunsul e un vector de distanțe, câte una pentru fiecare vârf de pornire.</p>
+    </div>
+    <div class="card" style="border-color:var(--teal-d)">
+      <h3 style="color:var(--teal-d)">Mecanismul</h3>
+      <p class="muted">E <b>matricial și iterativ</b>: pornești cu coloana destinației din matricea de adiacență, apoi recalculezi tot vectorul cu o formulă de minim, până când nu se mai schimbă nimic.</p>
+    </div>
+  </div>
+  <div class="note blue">Funcționează pe grafuri simple, orientate sau neorientate. E util când te interesează „cum ajung toți la un punct" (ex. toate orașele către un depozit central).</div>
+</section>
+
+<section id="matrice">
+  <h2>Matricea de adiacență A</h2>
+  <p class="lead">Totul pornește de la matricea ponderilor. Regula pentru fiecare element <code>a_ij</code>:</p>
+  <div class="card">
+    <div class="keyrow"><span class="k">a_ij = w(i,j)</span><span>dacă există arc de la i la j → ponderea lui</span></div>
+    <div class="keyrow"><span class="k">a_ii = 0</span><span>pe diagonală (de la un vârf la el însuși, cost 0)</span></div>
+    <div class="keyrow"><span class="k">a_ij = ∞</span><span>dacă NU există arc de la i la j</span></div>
+  </div>
+  <p class="muted">Matricea exemplului (drumuri către vârful 7). <span style="color:var(--blue-d)">Coloana 7</span> e cea de la care pornește algoritmul — distanța directă a fiecărui vârf către 7.</p>
+  <div style="overflow-x:auto">
+    <table class="mat" id="matrix"></table>
+  </div>
+</section>
+
+<section id="formula">
+  <h2>Formula iterativă</h2>
+  <p class="lead">Pornești cu <code>V⁽¹⁾</code> = coloana destinației. Apoi, la fiecare pas, recalculezi fiecare componentă:</p>
+  <div class="codeblock" style="font-size:15px;text-align:center">V⁽ᵏ⁾_i = min over j { a_ij + V⁽ᵏ⁻¹⁾_j }</div>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>În cuvinte:</b> noua distanță de la <code>i</code> către destinație = cea mai bună combinație între „mergi de la i la un vecin j" (costă <code>a_ij</code>) plus „de la j mai departe la destinație" (costă <code>V⁽ᵏ⁻¹⁾_j</code>, valoarea din pasul anterior).</p>
+    <p class="muted" style="margin-bottom:0">E aceeași idee de „relaxare", dar aplicată <b>simultan tuturor vârfurilor</b>, folosind vectorul din pasul precedent. Repeți până când <code>V⁽ᵗ⁾ = V⁽ᵗ⁻¹⁾</code> (nimic nu se mai schimbă).</p>
+  </div>
+</section>
+
+<section id="viz">
+  <h2><span class="tag">Seminar — Problema 4</span> Calcul pas cu pas</h2>
+  <p class="lead">Drumuri minime către <b>vârful 7</b>. La fiecare pas vezi noul vector <code>V⁽ᵏ⁾</code> și calculul fiecărei componente care se schimbă (<span style="color:var(--green-d)">verde</span>).</p>
+  <div class="viz" id="bk-viz">
+    <div class="viz-top">
+      <span class="srclabel">Destinație: <b style="color:var(--blue-d)">vârful 7</b> &nbsp;·&nbsp; <span class="step-count" id="bk-step"></span></span>
+      <div class="controls">
+        <button class="ctl" id="bk-reset"><span>↺</span>Reset</button>
+        <button class="ctl primary" id="bk-next">Pasul următor →</button>
+      </div>
+    </div>
+    <svg class="graph" id="bk-svg" viewBox="0 0 600 330"></svg>
+    <div class="vectors" id="bk-vectors"></div>
+    <div class="calc" id="bk-calc"></div>
+    <div class="explain" id="bk-explain">Apasă „Pasul următor". V⁽¹⁾ este coloana 7 din matrice — distanțele directe către 7.</div>
+  </div>
+  <div class="note green">💡 Observă vârful 1: în V⁽¹⁾ are 30 (arc direct 1→7 de cost 30). Dar în V⁽³⁾ scade la <b>21</b> — fiindcă drumul 1→2→6→7 (2+4+15=21) e mai ieftin decât arcul direct. Asta descoperă algoritmul iterație cu iterație.</div>
+</section>
+
+<section id="cand">
+  <h2>Când se oprește</h2>
+  <div class="card">
+    <p>Algoritmul se oprește când <b>doi vectori consecutivi sunt identici</b>: <code>V⁽ᵗ⁾ = V⁽ᵗ⁻¹⁾</code>. Atunci ai garantat că toate distanțele minime sunt găsite — o iterație în plus nu mai schimbă nimic.</p>
+    <p style="margin-bottom:0">În exemplu, <code>V⁽⁴⁾ = V⁽³⁾</code>, deci ne oprim la pasul 4. Rezultatul final: <code>V = (21, 19, 23, 25, 20, 15, 0)</code> — distanțele de la fiecare vârf (1-7) către vârful 7.</p>
+  </div>
+  <div class="note">La fel ca Bellman-Ford, sunt necesare cel mult <code>|V|−1</code> iterații (un drum minim are cel mult |V|−1 arce). Dacă continuă să scadă după atâtea iterații → există circuit negativ.</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Bellman-Kalaba · seminar 2 · drumuri către un vârf<br>
+  Diferit de Bellman-Ford (de la o sursă) și Dijkstra (greedy). Aici: matricial, către o destinație.
+</footer>
+</div>
+
+<script>
+const INF=Infinity;
+const A=[
+  [0,2,3,INF,INF,INF,30],
+  [INF,0,INF,5,INF,4,INF],
+  [INF,4,0,8,6,INF,INF],
+  [INF,INF,INF,0,10,10,INF],
+  [INF,INF,INF,INF,0,5,INF],
+  [INF,INF,INF,INF,INF,0,15],
+  [INF,INF,INF,INF,INF,INF,0]
+];
+const n=7, TARGET=6; // vârful 7 = index 6
+const LABELS=[1,2,3,4,5,6,7];
+
+/* graf pentru desen — arce din matrice */
+const G_POS={
+  1:[55,175], 2:[185,80], 4:[330,90], 6:[510,90],
+  3:[195,255], 5:[360,250], 7:[540,235]
+};
+/* arce care se desenează cu arcuire mare (ca în desen) */
+const BIG_ARC={'1-7':1,'2-6':1};
+const G_ARCS=[];
+for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(i!==j&&A[i][j]!==INF)G_ARCS.push([LABELS[i],LABELS[j],A[i][j]]);
+
+/* build steps */
+function buildBK(){
+  const steps=[];
+  let V=[];for(let i=0;i<n;i++)V.push(A[i][TARGET]);
+  steps.push({V:[...V],k:1,changed:[],calc:'V⁽¹⁾ = coloana 7 din matrice (distanțe directe către 7).',
+    msg:'V⁽¹⁾ este coloana destinației. Ex: vârful 1 are 30 (arc 1→7), vârful 6 are 15 (arc 6→7), restul ∞.'});
+  let k=1;
+  while(true){
+    k++;
+    const Vnew=[];const changed=[];const calcs=[];
+    for(let i=0;i<n;i++){
+      let best=INF,bestJ=-1;
+      for(let j=0;j<n;j++){
+        if(A[i][j]!==INF && V[j]!==INF && A[i][j]+V[j]<best){best=A[i][j]+V[j];bestJ=j;}
+      }
+      Vnew.push(best);
+      if(best!==V[i]){
+        changed.push(i);
+        if(bestJ>=0 && best!==INF)
+          calcs.push(`V[${LABELS[i]}] = a(${LABELS[i]},${LABELS[bestJ]}) + V⁽${k-1}⁾[${LABELS[bestJ]}] = ${A[i][bestJ]} + ${V[bestJ]} = ${best}`);
+      }
+    }
+    const stable=Vnew.every((x,i)=>x===V[i]);
+    steps.push({V:[...Vnew],k,changed,calc:calcs.length?calcs.join('\n'):'(niciun calc nou — vector identic)',
+      msg:stable?`<b>V⁽${k}⁾ = V⁽${k-1}⁾</b> → identice! Algoritmul se oprește. Distanțele finale către 7 sunt găsite.`
+        :`Recalculez fiecare V[i] = min(a_ij + V⁽${k-1}⁾[j]). S-au schimbat: ${changed.map(i=>LABELS[i]).join(', ')||'niciuna'}.`,
+      stable});
+    if(stable)break;
+    V=Vnew;
+    if(k>8)break;
+  }
+  return steps;
+}
+const BK=buildBK();
+
+/* draw graph */
+function drawBK(){
+  const svg=document.getElementById('bk-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  const defs=document.createElementNS(ns,'defs');
+  defs.innerHTML='<marker id="bka" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b8b4ab" stroke-width="1.5"/></marker>';
+  svg.appendChild(defs);
+  G_ARCS.forEach(([a,b,w])=>{
+    const[x1,y1]=G_POS[a],[x2,y2]=G_POS[b];const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),r=20;
+    const sx=x1+dx/len*r,sy=y1+dy/len*r,ex=x2-dx/len*r,ey=y2-dy/len*r;
+    const big=BIG_ARC[a+'-'+b];
+    let off=big?(a===2?-60:70):11;  // 2→6 se arcuiește sus (negativ), 1→7 jos (pozitiv)
+    const mx=(sx+ex)/2,my=(sy+ey)/2,px=-dy/len*off,py=dx/len*off;
+    const path=document.createElementNS(ns,'path');
+    path.setAttribute('d',`M${sx},${sy} Q${mx+px},${my+py} ${ex},${ey}`);
+    path.setAttribute('class','edge');path.setAttribute('marker-end','url(#bka)');svg.appendChild(path);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',mx+px*1.15);t.setAttribute('y',my+py*1.15-2);
+    t.setAttribute('class','ew');t.setAttribute('text-anchor','middle');t.textContent=w;svg.appendChild(t);
+  });
+  LABELS.forEach(lab=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',G_POS[lab][0]);c.setAttribute('cy',G_POS[lab][1]);c.setAttribute('r',18);
+    c.setAttribute('class','node-c'+(lab===7?' target':''));g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',G_POS[lab][0]);t.setAttribute('y',G_POS[lab][1]);
+    t.setAttribute('class','node-lbl');t.textContent=lab;g.appendChild(t);
+    svg.appendChild(g);
+  });
+}
+
+/* matrix table */
+function drawMatrix(){
+  const t=document.getElementById('matrix');
+  let html='<tr><th></th>';LABELS.forEach(l=>html+='<th>'+l+'</th>');html+='</tr>';
+  for(let i=0;i<n;i++){
+    html+='<tr><th>'+LABELS[i]+'</th>';
+    for(let j=0;j<n;j++){
+      const v=A[i][j]===INF?'∞':A[i][j];
+      let cls=i===j?'diag':(j===TARGET?'col':'');
+      html+='<td class="'+cls+'">'+v+'</td>';
+    }
+    html+='</tr>';
+  }
+  t.innerHTML=html;
+}
+
+(function(){
+  let idx=0;
+  drawBK();drawMatrix();
+  const elStep=document.getElementById('bk-step'),elVec=document.getElementById('bk-vectors'),
+    elCalc=document.getElementById('bk-calc'),elEx=document.getElementById('bk-explain'),
+    btnNext=document.getElementById('bk-next'),btnReset=document.getElementById('bk-reset');
+  function render(){
+    const s=BK[idx];
+    elStep.textContent='pas '+idx+' / '+(BK.length-1);
+    // vectors: show all up to current
+    let html='';
+    for(let p=0;p<=idx;p++){
+      const st=BK[p];const faded=p<idx?'faded':'';
+      html+='<div><div class="vlabel">V⁽'+st.k+'⁾</div><table class="vec '+faded+'">';
+      html+='<tr>';LABELS.forEach(l=>html+='<th>'+l+'</th>');html+='</tr><tr>';
+      st.V.forEach((v,i)=>{
+        const val=v===INF?'∞':v;
+        let cls=(p===idx&&st.changed.includes(i))?'changed':(p===idx?'cur':'');
+        html+='<td class="'+cls+'">'+val+'</td>';
+      });
+      html+='</tr></table></div>';
+    }
+    elVec.innerHTML=html;
+    elCalc.textContent=s.calc;
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=BK.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<BK.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Ce calculează Bellman-Kalaba, spre deosebire de Dijkstra?',
+   opts:['Drum de la o sursă către toate','Drum de la toate vârfurile către un vârf fix','Arborele minim de acoperire','Fluxul maxim'],correct:1,
+   why:'Bellman-Kalaba găsește drumurile minime <b>de la toate vârfurile către o destinație fixă</b>. E „întors" față de Dijkstra (care merge de la sursă spre toate).'},
+  {q:'Cum se inițializează vectorul V⁽¹⁾?',
+   opts:['Cu zerouri','Cu coloana destinației din matricea A','Cu ∞ peste tot','Cu linia sursei'],correct:1,
+   why:'V⁽¹⁾ = <b>coloana destinației</b> din A — adică distanțele directe (un singur arc) de la fiecare vârf către destinație.'},
+  {q:'Ce face formula V⁽ᵏ⁾_i = min_j (a_ij + V⁽ᵏ⁻¹⁾_j)?',
+   opts:['Adună toate ponderile','Caută cel mai bun vecin intermediar j către destinație','Sortează vârfurile','Numără arcele'],correct:1,
+   why:'Pentru fiecare vârf i, încearcă toți vecinii j: „mergi i→j (cost a_ij) apoi j→destinație (V din pasul anterior)" și ia <b>minimul</b>.'},
+  {q:'Când se oprește algoritmul?',
+   opts:['După exact 3 pași','Când doi vectori consecutivi sunt identici','Când toate valorile sunt 0','Niciodată'],correct:1,
+   why:'Stop când <b>V⁽ᵗ⁾ = V⁽ᵗ⁻¹⁾</b> — nimic nu se mai schimbă, deci distanțele minime sunt finale.'},
+  {q:'În exemplu, de ce scade V[1] de la 30 la 21?',
+   opts:['Eroare','Drumul 1→2→6→7 (21) e mai ieftin decât arcul direct 1→7 (30)','Vârful 1 e destinația','Se adună greșit'],correct:1,
+   why:'Arcul direct 1→7 costă 30, dar drumul ocolit 1→2→6→7 = 2+4+15 = <b>21</b>. Algoritmul descoperă asta după câteva iterații.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

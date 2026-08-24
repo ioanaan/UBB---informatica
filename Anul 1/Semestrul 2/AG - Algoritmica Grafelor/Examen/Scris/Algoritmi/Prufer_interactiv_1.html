@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codarea Prüfer — arbori etichetați ↔ secvențe</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:80px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.purple{background:var(--purple-bg);border-color:var(--purple-d)}
+  .note.purple b{color:var(--purple-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--purple);background:var(--purple-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--purple-d);border-color:var(--purple);color:#fff}
+  button.ctl.primary:hover{background:var(--purple)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:300px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2.2;fill:none}
+  .edge.removed{stroke:#e0ddd4;stroke-width:1.5;stroke-dasharray:3 4}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0;transition:fill .3s,opacity .3s}
+  .node-c.root{fill:var(--blue-d);stroke:var(--blue)}
+  .node-c.leaf{fill:var(--amber-d);stroke:var(--amber);stroke-width:3}
+  .node-c.gone{fill:#d8d5cc;opacity:.35}
+  .node-c.pred{fill:var(--green-d);stroke:var(--green);stroke-width:3}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-lbl.gone{opacity:.4}
+  .seqbox{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:14px;min-height:40px}
+  .seqlbl{font-family:var(--mono);font-size:13px;color:var(--muted);margin-right:6px}
+  .schip{font-family:var(--mono);font-size:15px;font-weight:700;padding:6px 13px;border-radius:7px;background:var(--purple-bg);color:var(--purple-d);border:0.5px solid var(--purple-d);animation:pop .25s}
+  @keyframes pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+  .explain{background:#f7f5ef;border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Codarea Prüfer</h1>
+  <div class="sub">Bijecție între arbori etichetați și secvențe · legătura cu formula Cayley · seminar 3</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ce este</a>
+  <a href="#codare">Codare (arbore → secvență)</a>
+  <a href="#viz">Codare pas cu pas</a>
+  <a href="#decodare">Decodare (secvență → arbore)</a>
+  <a href="#props">Proprietăți utile</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce este și de ce contează</h2>
+  <p class="lead">Codarea Prüfer stabilește o <b>corespondență 1-la-1</b> (bijecție) între arborii etichetați cu n vârfuri și secvențele de lungime <b>n−2</b> formate din etichete. Fiecare arbore ↔ exact o secvență, și invers.</p>
+  <div class="note purple">🔑 <b>Legătura cu Cayley:</b> fiindcă fiecare secvență are n−2 poziții și fiecare poziție poate fi oricare din cele n etichete, există <code>n^(n−2)</code> secvențe — deci tot atâția arbori. Asta <b>demonstrează formula lui Cayley</b>: numărul de arbori etichetați cu n vârfuri este n^(n−2).</div>
+  <div class="note"><b>Notă despre seminar:</b> varianta din cursul tău fixează vârful 1 ca rădăcină și produce o secvență de lungime n−1 (include și rădăcina la final). Materialul urmează exact această variantă pentru arborele 2a.</div>
+</section>
+
+<section id="codare">
+  <h2>Codarea: arbore → secvență</h2>
+  <p class="lead">Repeți același pas până rămâne doar rădăcina: găsești <b>frunza cu eticheta minimă</b>, adaugi <b>predecesorul (vecinul) ei</b> în secvență, apoi ștergi frunza.</p>
+  <div class="codeblock"><span class="fn">CODARE_PRUFER</span>(T):     <span class="cm">// rădăcina = vârful 1</span>
+  K = ∅
+  <span class="kw">while</span> T conține alte vârfuri decât rădăcina:
+      v = frunza minimă din T       <span class="cm">// grad 1, eticheta cea mai mică</span>
+      K ← predecesor(v)             <span class="cm">// adaug vecinul ei în secvență</span>
+      T = T \ {v}                   <span class="cm">// șterg frunza</span>
+  <span class="kw">return</span> K</div>
+  <div class="card">
+    <div class="keyrow"><span class="k">frunză</span><span>vârf de grad 1 (o singură muchie). Mereu alegi pe cea cu <b>eticheta minimă</b>.</span></div>
+    <div class="keyrow"><span class="k">predecesor</span><span>singurul vecin al frunzei — el intră în secvență, NU frunza.</span></div>
+  </div>
+</section>
+
+<section id="viz">
+  <h2>Codare pas cu pas — arborele 2a din seminar</h2>
+  <p class="lead">Rădăcină = <b>1</b>. La fiecare pas se evidențiază frunza minimă (<span style="color:var(--amber-d)">portocaliu</span>), predecesorul ei (<span style="color:var(--green-d)">verde</span>) intră în secvență, apoi frunza dispare.</p>
+  <div class="viz" id="pr-viz">
+    <div class="viz-top">
+      <span class="srclabel">Rădăcină: <b style="color:var(--blue-d)">1</b> &nbsp;·&nbsp; <span class="step-count" id="pr-step"></span></span>
+      <div class="controls">
+        <button class="ctl" id="pr-reset"><span>↺</span>Reset</button>
+        <button class="ctl primary" id="pr-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="pr-svg" viewBox="0 0 480 300"></svg>
+    <div class="seqbox" id="pr-seq"><span class="seqlbl">Secvența K:</span></div>
+    <div class="explain" id="pr-explain">Apasă „Pas →". Caut frunza cu eticheta minimă.</div>
+  </div>
+  <div class="note purple">💡 Secvența finală: <b>2, 3, 2, 1, 6, 1</b>. Observă: un vârf apare în secvență de exact <b>(gradul lui − 1)</b> ori. Vârful 2 are gradul 3 → apare de 2 ori. Vârful 1 (rădăcina) gradul 2 → apare o dată (plus poziția finală în varianta cu rădăcină).</div>
+</section>
+
+<section id="decodare">
+  <h2>Decodarea: secvență → arbore</h2>
+  <p class="lead">Procesul invers. Reconstruiești arborele citind secvența și adăugând muchii.</p>
+  <div class="codeblock"><span class="fn">DECODARE_PRUFER</span>(K, n):
+  T = ∅
+  <span class="kw">for</span> i = 1 <span class="kw">to</span> n−1:
+      x = primul element din K
+      y = cel mai mic număr natural care NU se găsește în K
+      adaugă muchia (x, y) în T       <span class="cm">// x = părintele lui y</span>
+      șterge x din K
+      adaugă y la coada secvenței K     <span class="cm">// (varianta cu rădăcină)</span>
+  <span class="kw">return</span> T</div>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>Ideea standard:</b> la fiecare pas iei primul element din secvență (<code>x</code>) și îl conectezi cu cel mai mic număr care <b>nu mai apare</b> în restul secvenței (<code>y</code> — adică o frunză). Adaugi muchia, elimini x din față, marchezi y ca folosit.</p>
+    <p class="muted" style="margin-bottom:0">La final rămân două vârfuri neconectate → le legi cu ultima muchie.</p>
+  </div>
+  <div class="note">Pentru secvența <code>2,3,2,1,6,1</code> decodarea reconstruiește exact arborele 2a — bijecția funcționează în ambele sensuri.</div>
+</section>
+
+<section id="props">
+  <h2>Proprietăți utile la examen</h2>
+  <div class="card">
+    <div class="keyrow"><span class="k" style="min-width:120px">lungime</span><span>secvența standard are <b>n−2</b> elemente (varianta seminar cu rădăcină: n−1).</span></div>
+    <div class="keyrow"><span class="k" style="min-width:120px">grad ↔ apariții</span><span>un vârf <code>v</code> apare în secvență de exact <b>(grad(v) − 1)</b> ori. Frunzele (grad 1) <b>nu apar deloc</b>.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:120px">Cayley</span><span>n^(n−2) secvențe posibile = n^(n−2) arbori etichetați.</span></div>
+  </div>
+  <div class="note"><b>Tip de subiect (seminar, problema 4):</b> „ce valoare are x în secvența Prüfer dacă toate vârfurile au grad impar?" Folosești proprietatea grad↔apariții: numeri de câte ori apare fiecare vârf, adaugi 1 → gradul; impui ca toate să fie impare și deduci x.</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Codarea Prüfer · seminar 3 · arbori etichetați ↔ secvențe<br>
+  Huffman și Cayley sunt în pagini separate.
+</footer>
+</div>
+
+<script>
+/* Arborele 2a: muchii 1-2,1-6,2-3,2-4,3-5,6-7. Rădăcină 1. */
+const EDGES=[[1,2],[1,6],[2,3],[2,4],[3,5],[6,7]];
+const N=7, ROOT=1;
+const POS={
+  1:[240,50], 2:[140,130], 6:[340,130], 3:[90,210],
+  4:[190,210], 7:[340,225], 5:[90,285]
+};
+
+/* build coding steps */
+function buildCoding(){
+  const steps=[];
+  const adj={};for(let i=1;i<=N;i++)adj[i]=new Set();
+  EDGES.forEach(([a,b])=>{adj[a].add(b);adj[b].add(a);});
+  const gone={};const K=[];
+  function snap(leaf,pred,msg){
+    steps.push({gone:{...gone},K:[...K],leaf,pred,
+      adj:Object.fromEntries(Object.entries(adj).map(([k,v])=>[k,[...v]])),msg});
+  }
+  snap(null,null,`Pornesc. Rădăcina e 1 (nu se elimină). Caut frunza minimă.`);
+  while(true){
+    let leaf=null;
+    for(let v=1;v<=N;v++){if(v!==ROOT && !gone[v] && adj[v].size===1){leaf=v;break;}}
+    if(leaf===null)break;
+    const pred=[...adj[leaf]][0];
+    snap(leaf,pred,`Frunza minimă: <b>${leaf}</b> (grad 1). Predecesorul ei e <b>${pred}</b> → îl adaug în secvență.`);
+    K.push(pred);
+    adj[pred].delete(leaf);adj[leaf].clear();gone[leaf]=true;
+    snap(null,null,`Am adăugat ${pred} în K. Am șters frunza ${leaf}. Secvența: [${K.join(', ')}].`);
+  }
+  steps.push({gone:{...gone},K:[...K],leaf:null,pred:null,
+    adj:Object.fromEntries(Object.entries(adj).map(([k,v])=>[k,[...v]])),final:true,
+    msg:`<b>Gata!</b> A rămas doar rădăcina. Secvența Prüfer: <b>${K.join(', ')}</b>.`});
+  return steps;
+}
+const STEPS=buildCoding();
+
+function drawTree(){
+  const svg=document.getElementById('pr-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  EDGES.forEach(([a,b],i)=>{
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',POS[a][0]);l.setAttribute('y1',POS[a][1]);
+    l.setAttribute('x2',POS[b][0]);l.setAttribute('y2',POS[b][1]);
+    l.setAttribute('class','edge');l.id='pr-e'+i;svg.appendChild(l);
+  });
+  for(let n=1;n<=N;n++){
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',19);
+    c.setAttribute('class','node-c'+(n===ROOT?' root':''));c.id='pr-n'+n;g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;t.id='pr-t'+n;g.appendChild(t);
+    svg.appendChild(g);
+  }
+}
+
+(function(){
+  let idx=0;
+  drawTree();
+  const elStep=document.getElementById('pr-step'),elSeq=document.getElementById('pr-seq'),
+    elEx=document.getElementById('pr-explain'),btnNext=document.getElementById('pr-next'),
+    btnReset=document.getElementById('pr-reset');
+  function render(){
+    const s=STEPS[idx];
+    elStep.textContent='pas '+idx+' / '+(STEPS.length-1);
+    for(let n=1;n<=N;n++){
+      const c=document.getElementById('pr-n'+n),t=document.getElementById('pr-t'+n);
+      let cls='node-c';
+      if(s.gone[n])cls+=' gone';
+      else if(s.leaf===n)cls+=' leaf';
+      else if(s.pred===n)cls+=' pred';
+      else if(n===ROOT)cls+=' root';
+      c.setAttribute('class',cls);
+      t.setAttribute('class','node-lbl'+(s.gone[n]?' gone':''));
+    }
+    EDGES.forEach(([a,b],i)=>{
+      const e=document.getElementById('pr-e'+i);
+      e.setAttribute('class', (s.gone[a]||s.gone[b])?'edge removed':'edge');
+    });
+    elSeq.innerHTML='<span class="seqlbl">Secvența K:</span>';
+    if(s.K.length) s.K.forEach(v=>{const x=document.createElement('span');x.className='schip';x.textContent=v;elSeq.appendChild(x);});
+    else {const e=document.createElement('span');e.className='muted';e.style.fontSize='13px';e.textContent='(goală)';elSeq.appendChild(e);}
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=STEPS.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<STEPS.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Ce stabilește codarea Prüfer?',
+   opts:['Drumul minim','O bijecție între arbori etichetați și secvențe','Fluxul maxim','Ciclul eulerian'],correct:1,
+   why:'Prüfer e o <b>bijecție</b>: fiecare arbore etichetat cu n vârfuri ↔ exact o secvență. De-asta demonstrează formula Cayley.'},
+  {q:'La codare, ce adaugi în secvență?',
+   opts:['Frunza minimă','Predecesorul (vecinul) frunzei minime','Rădăcina','Vârful maxim'],correct:1,
+   why:'Adaugi <b>predecesorul</b> frunzei minime, NU frunza însăși. Apoi ștergi frunza.'},
+  {q:'De câte ori apare un vârf v în secvența Prüfer?',
+   opts:['O dată','grad(v) ori','grad(v) − 1 ori','niciodată'],correct:2,
+   why:'Un vârf apare de exact <b>grad(v) − 1</b> ori. Frunzele (grad 1) nu apar deloc; vârfurile cu grad mare apar des.'},
+  {q:'Ce lungime are secvența Prüfer standard pentru n vârfuri?',
+   opts:['n','n−1','n−2','2n'],correct:2,
+   why:'Secvența standard are <b>n−2</b> elemente. De aici Cayley: n^(n−2) secvențe = n^(n−2) arbori.'},
+  {q:'Secvența Prüfer a arborelui din seminar (2a) este:',
+   opts:['1,2,3,4,5,6','2,3,2,1,6,1','6,1,2,3,2,1','toate frunzele'],correct:1,
+   why:'Eliminând repetat frunza minimă și notând predecesorul: <b>2, 3, 2, 1, 6, 1</b>.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drumul critic — planificarea proiectelor</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1040px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:44px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;letter-spacing:-.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--blue-bg);color:var(--blue-d)}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:800px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:44px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}.note.green b{color:var(--green-d)}
+  .note.red{background:var(--red-bg);border-color:var(--red-d)}.note.red b{color:var(--red-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  .phase{font-size:12px;font-family:var(--mono);padding:3px 10px;border-radius:6px}
+  .phase.fwd{background:var(--blue-bg);color:var(--blue-d)}
+  .phase.bwd{background:var(--purple-bg);color:var(--purple-d)}
+  svg.graph{width:100%;height:400px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2;fill:none}
+  .edge.critic{stroke:var(--red);stroke-width:3.5}
+  .actbox{transition:all .3s}
+  .actbox rect{fill:#fff;stroke:var(--line);stroke-width:1.5}
+  .actbox.active rect{stroke:var(--amber);stroke-width:3}
+  .actbox.done rect{stroke:var(--blue-d);stroke-width:1.5}
+  .actbox.critic rect{fill:var(--red-bg);stroke:var(--red);stroke-width:2.5}
+  .actbox.se rect{fill:var(--panel2)}
+  .act-name{font-size:14px;font-weight:700;text-anchor:middle;font-family:var(--sans);fill:var(--ink)}
+  .act-t{font-size:10px;font-family:var(--mono);text-anchor:middle;fill:var(--muted)}
+  .act-t.set{fill:var(--blue-d);font-weight:700}
+  .act-t.setb{fill:var(--purple-d);font-weight:700}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:44px}
+  .explain.bwd{border-left-color:var(--purple)}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .legend-box{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+  .legend-box .cell{display:flex;align-items:center;gap:6px}
+  .minibox{width:44px;height:30px;border:1px solid var(--line);border-radius:4px;display:inline-grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:1fr 1fr;font-size:8px;font-family:var(--mono);text-align:center;align-items:center}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:13px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:7px 9px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res tr.crit td{background:var(--red-bg);color:var(--red-d);font-weight:700}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Drumul critic</h1>
+  <div class="sub">Planificarea proiectelor · cei 4 timpi ES/EF/LS/LF · seminar 5</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Problema</a>
+  <a href="#timpi">Cei 4 timpi</a>
+  <a href="#viz">Calcul pas cu pas</a>
+  <a href="#rezultat">Drumul critic</a>
+  <a href="#retineri">De reținut</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce problemă rezolvă</h2>
+  <p class="lead">Ai un proiect din activități care depind unele de altele (una nu poate începe până nu se termină alta). Fiecare durează un timp. Vrei să afli: <b>în cât timp minim se termină tot proiectul</b>, și <b>care activități nu au voie să întârzie</b>.</p>
+  <div class="card">
+    <p style="margin-bottom:0">Modelezi ca un <b>graf orientat</b>: vârfuri = activități, arce = dependențe. Adaugi un vârf <code>Start</code> și unul <code>Final</code>. <b>Drumul critic</b> = cel mai lung drum de la Start la Final — el dictează durata minimă a proiectului.</p>
+  </div>
+</section>
+
+<section id="timpi">
+  <h2>Cei patru timpi</h2>
+  <p class="lead">Pentru fiecare activitate calculezi patru numere, în două treceri prin graf.</p>
+  <div class="card">
+    <h3 style="color:var(--blue-d)">Trecerea înainte → (calculează ES și EF)</h3>
+    <div class="keyrow"><span class="k">ES</span><span><b>Early Start</b> — cel mai devreme poate începe = <b>maximul</b> EF-urilor predecesorilor (aștepți să se termine toți)</span></div>
+    <div class="keyrow"><span class="k">EF</span><span><b>Early Finish</b> — cel mai devreme se termină = <code>ES + durata</code></span></div>
+  </div>
+  <div class="card">
+    <h3 style="color:var(--purple-d)">Trecerea înapoi ← (calculează LF și LS)</h3>
+    <div class="keyrow"><span class="k">LF</span><span><b>Late Finish</b> — cel mai târziu se poate termina fără a întârzia proiectul = <b>minimul</b> LS-urilor succesorilor</span></div>
+    <div class="keyrow"><span class="k">LS</span><span><b>Late Start</b> — cel mai târziu poate începe = <code>LF − durata</code></span></div>
+  </div>
+  <div class="note"><b>Rezerva (slack) = LS − ES.</b> Cât poate întârzia activitatea fără să afecteze proiectul. Rezervă <b>0</b> → activitate <b>critică</b>.</div>
+</section>
+
+<section id="viz">
+  <h2><span class="tag">Seminar</span> Calcul pas cu pas</h2>
+  <p class="lead">Proiectul din seminar: A(3), B(4), C(2), D(5), E(1), F(2), G(4), H(3), cu dependențele din tabel. Fiecare cutie arată cei 4 timpi. Întâi trecerea <span style="color:var(--blue-d)">înainte</span> (ES/EF), apoi <span style="color:var(--purple-d)">înapoi</span> (LS/LF).</p>
+  <div class="card" style="padding:14px 18px">
+    <div class="legend-box">
+      <span class="cell">Fiecare cutie:
+        <span class="minibox"><span style="color:var(--blue-d)">ES</span><span>nume</span><span style="color:var(--blue-d)">EF</span><span style="color:var(--purple-d)">LS</span><span>dur</span><span style="color:var(--purple-d)">LF</span></span>
+      </span>
+      <span class="cell"><span style="width:14px;height:14px;background:var(--red-bg);border:1px solid var(--red);border-radius:3px;display:inline-block"></span> pe drumul critic</span>
+    </div>
+  </div>
+  <div class="viz" id="cp-viz">
+    <div class="viz-top">
+      <span class="srclabel"><span class="phase fwd" id="cp-phase">trecere înainte →</span> &nbsp; <span class="step-count" id="cp-step"></span></span>
+      <div class="controls">
+        <button class="ctl" id="cp-reset">↺ Reset</button>
+        <button class="ctl primary" id="cp-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="cp-svg" viewBox="0 0 1000 400"></svg>
+    <div class="explain" id="cp-explain">Apasă „Pas →". Încep cu trecerea înainte: Start are ES=0.</div>
+  </div>
+</section>
+
+<section id="rezultat">
+  <h2>Rezultatul: drumul critic</h2>
+  <table class="res" id="cp-table"></table>
+  <div class="note red" style="margin-top:16px"><b>Drum critic: A → B → D → G → H</b>, durată totală <b>19</b>. Astea au rezervă 0 — dacă oricare întârzie o zi, tot proiectul întârzie o zi.</div>
+  <div class="note green"><b>Cum grăbești proiectul:</b> NU are rost să grăbești C, E sau F (au rezervă 6, 6, 9). Trebuie să scurtezi ceva de pe drumul critic. Asta e utilitatea practică: știi exact unde să intervii.</div>
+</section>
+
+<section id="retineri">
+  <h2>De reținut pentru examen</h2>
+  <div class="card">
+    <div class="keyrow"><span class="k" style="min-width:90px">înainte →</span><span>ES = <b>max</b>(EF predecesori), EF = ES + durată. Începi de la Start=0.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:90px">înapoi ←</span><span>LF = <b>min</b>(LS succesori), LS = LF − durată. Începi de la Final = durata proiectului.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:90px">critic</span><span>rezervă = LS − ES = 0. Lanțul lor = drumul critic = durata minimă.</span></div>
+  </div>
+  <div class="note"><b>Truc de verificare:</b> pe drumul critic, ES=LS și EF=LF la fiecare activitate (nu există joc). Dacă la o activitate ES≠LS, sigur nu-i critică.</div>
+</section>
+
+<footer>
+  Drumul critic · seminar 5 · planificarea proiectelor<br>
+  Parte din problema ordonanței (subiectul 3 / seminar 5).
+</footer>
+</div>
+
+<script>
+const ACTS={A:{dur:3,pred:[]},B:{dur:4,pred:['A']},C:{dur:2,pred:['A']},D:{dur:5,pred:['B']},E:{dur:1,pred:['C']},F:{dur:2,pred:['C']},G:{dur:4,pred:['D','E']},H:{dur:3,pred:['F','G']}};
+const ORDER=['A','B','C','D','E','F','G','H'];
+const SUCC={};for(const a in ACTS)SUCC[a]=[];
+for(const a in ACTS)for(const p of ACTS[a].pred)SUCC[p].push(a);
+
+/* positions: Start left, Final right, activities by level */
+const POS={
+  Start:[55,200],
+  A:[180,200],
+  B:[340,120], C:[340,290],
+  D:[510,120], E:[510,230], F:[510,330],
+  G:[680,175],
+  H:[830,175],
+  Final:[950,200]
+};
+const ARCS=[['Start','A'],['A','B'],['A','C'],['B','D'],['C','E'],['C','F'],['D','G'],['E','G'],['F','H'],['G','H'],['H','Final']];
+const CRITIC=['A','B','D','G','H'];
+const CRIT_ARCS=[['Start','A'],['A','B'],['B','D'],['D','G'],['G','H'],['H','Final']];
+
+/* compute all times */
+const ES={},EF={},LS={},LF={};
+for(const a of ORDER){ES[a]=ACTS[a].pred.length?Math.max(...ACTS[a].pred.map(p=>EF[p])):0;EF[a]=ES[a]+ACTS[a].dur;}
+const PROJ=Math.max(...Object.values(EF));
+for(const a of[...ORDER].reverse()){LF[a]=SUCC[a].length?Math.min(...SUCC[a].map(s=>LS[s])):PROJ;LS[a]=LF[a]-ACTS[a].dur;}
+
+/* build steps: forward pass then backward pass */
+function buildSteps(){
+  const steps=[];
+  const shown={fwd:{},bwd:{}};
+  steps.push({phase:'fwd',shown:JSON.parse(JSON.stringify(shown)),active:null,msg:'Trecerea înainte. Start: ES=0, EF=0.'});
+  for(const a of ORDER){
+    shown.fwd[a]=true;
+    const predTxt=ACTS[a].pred.length?`max(${ACTS[a].pred.map(p=>'EF['+p+']='+EF[p]).join(', ')})=${ES[a]}`:'0 (după Start)';
+    steps.push({phase:'fwd',shown:JSON.parse(JSON.stringify(shown)),active:a,
+      msg:`<b>${a}</b> (durată ${ACTS[a].dur}): ES = ${predTxt}. EF = ES + ${ACTS[a].dur} = <b>${EF[a]}</b>.`});
+  }
+  steps.push({phase:'fwd',shown:JSON.parse(JSON.stringify(shown)),active:null,
+    msg:`Trecerea înainte gata. Durata proiectului = max(EF) = <b>${PROJ}</b>. Acum trecerea înapoi.`});
+  for(const a of[...ORDER].reverse()){
+    shown.bwd[a]=true;
+    const succTxt=SUCC[a].length?`min(${SUCC[a].map(s=>'LS['+s+']='+LS[s]).join(', ')})=${LF[a]}`:`${PROJ} (Final)`;
+    steps.push({phase:'bwd',shown:JSON.parse(JSON.stringify(shown)),active:a,
+      msg:`<b>${a}</b>: LF = ${succTxt}. LS = LF − ${ACTS[a].dur} = <b>${LS[a]}</b>. Rezervă = LS−ES = ${LS[a]}−${ES[a]} = <b>${LS[a]-ES[a]}</b>${LS[a]-ES[a]===0?' → CRITIC':''}.`});
+  }
+  steps.push({phase:'bwd',shown:JSON.parse(JSON.stringify(shown)),active:null,final:true,
+    msg:`<b>Gata!</b> Activitățile cu rezervă 0 formează drumul critic: <b>A→B→D→G→H</b> (durată ${PROJ}).`});
+  return steps;
+}
+const STEPS=buildSteps();
+
+function drawCP(){
+  const svg=document.getElementById('cp-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  const defs=document.createElementNS(ns,'defs');
+  defs.innerHTML='<marker id="cpa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b8b4ab" stroke-width="1.5"/></marker>'+
+    '<marker id="cpc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#d13b3a" stroke-width="2"/></marker>';
+  svg.appendChild(defs);
+  const W=64,H=44;
+  ARCS.forEach(([a,b])=>{
+    const pa=POS[a],pb=POS[b];
+    // from right edge of a to left edge of b
+    const x1=pa[0]+ (a==='Start'||a==='Final'?20:W/2), y1=pa[1];
+    const x2=pb[0]- (b==='Start'||b==='Final'?20:W/2), y2=pb[1];
+    const isCrit=CRIT_ARCS.some(([u,v])=>u===a&&v===b);
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('class','edge'+(isCrit?' critic':''));
+    l.setAttribute('marker-end',isCrit?'url(#cpc)':'url(#cpa)');l.id='cp-e'+a+'-'+b;
+    svg.appendChild(l);
+  });
+  // nodes
+  for(const name in POS){
+    const p=POS[name];
+    const g=document.createElementNS(ns,'g');g.setAttribute('class','actbox');g.id='cp-a'+name;
+    const isSE=(name==='Start'||name==='Final');
+    if(isSE){
+      const c=document.createElementNS(ns,'circle');
+      c.setAttribute('cx',p[0]);c.setAttribute('cy',p[1]);c.setAttribute('r',22);
+      c.setAttribute('fill','#f0ede5');c.setAttribute('stroke','#b8b4ab');c.setAttribute('stroke-width','1.5');
+      g.appendChild(c);
+      const t=document.createElementNS(ns,'text');t.setAttribute('x',p[0]);t.setAttribute('y',p[1]);
+      t.setAttribute('class','act-name');t.setAttribute('dominant-baseline','central');t.setAttribute('font-size','11');t.textContent=name;
+      g.appendChild(t);
+    } else {
+      const rect=document.createElementNS(ns,'rect');
+      rect.setAttribute('x',p[0]-W/2);rect.setAttribute('y',p[1]-H/2);rect.setAttribute('width',W);rect.setAttribute('height',H);rect.setAttribute('rx',6);
+      g.appendChild(rect);
+      // grid: ES | name | EF  /  LS | dur | LF
+      const cells=[
+        [p[0]-W/2+11,p[1]-9,'es','es'+name],
+        [p[0],p[1]-9,'name',null],
+        [p[0]+W/2-11,p[1]-9,'ef','ef'+name],
+        [p[0]-W/2+11,p[1]+11,'ls','ls'+name],
+        [p[0],p[1]+11,'dur',null],
+        [p[0]+W/2-11,p[1]+11,'lf','lf'+name]
+      ];
+      cells.forEach(([x,y,type,id])=>{
+        const t=document.createElementNS(ns,'text');t.setAttribute('x',x);t.setAttribute('y',y);
+        t.setAttribute('text-anchor','middle');t.setAttribute('dominant-baseline','central');
+        if(type==='name'){t.setAttribute('class','act-name');t.textContent=name;}
+        else if(type==='dur'){t.setAttribute('class','act-t');t.textContent=ACTS[name].dur;}
+        else {t.setAttribute('class','act-t');t.id='cp-'+id;t.textContent='';}
+        g.appendChild(t);
+      });
+    }
+    svg.appendChild(g);
+  }
+}
+
+(function(){
+  let idx=0;
+  drawCP();
+  const elStep=document.getElementById('cp-step'),elPhase=document.getElementById('cp-phase'),
+    elEx=document.getElementById('cp-explain'),elTable=document.getElementById('cp-table'),
+    btnNext=document.getElementById('cp-next'),btnReset=document.getElementById('cp-reset');
+  function render(){
+    const s=STEPS[idx];
+    elStep.textContent='pas '+idx+' / '+(STEPS.length-1);
+    elPhase.textContent=s.phase==='fwd'?'trecere înainte →':'trecere înapoi ←';
+    elPhase.className='phase '+(s.phase==='fwd'?'fwd':'bwd');
+    for(const name in POS){
+      if(name==='Start'||name==='Final')continue;
+      const box=document.getElementById('cp-a'+name);
+      let cls='actbox';
+      if(s.active===name)cls+=' active';
+      if(s.final&&CRITIC.includes(name))cls+=' critic';
+      box.setAttribute('class',cls);
+      const es=document.getElementById('cp-es'+name),ef=document.getElementById('cp-ef'+name),
+        ls=document.getElementById('cp-ls'+name),lf=document.getElementById('cp-lf'+name);
+      if(s.shown.fwd[name]){es.textContent=ES[name];es.setAttribute('class','act-t set');ef.textContent=EF[name];ef.setAttribute('class','act-t set');}
+      else{es.textContent='';ef.textContent='';}
+      if(s.shown.bwd[name]){ls.textContent=LS[name];ls.setAttribute('class','act-t setb');lf.textContent=LF[name];lf.setAttribute('class','act-t setb');}
+      else{ls.textContent='';lf.textContent='';}
+    }
+    elEx.innerHTML=s.msg;
+    elEx.className='explain'+(s.phase==='bwd'?' bwd':'');
+    // table
+    if(s.final){
+      let html='<tr><th>Act</th><th>dur</th><th>ES</th><th>EF</th><th>LS</th><th>LF</th><th>rezervă</th></tr>';
+      for(const a of ORDER){const slack=LS[a]-ES[a];
+        html+='<tr class="'+(slack===0?'crit':'')+'"><td>'+a+'</td><td>'+ACTS[a].dur+'</td><td>'+ES[a]+'</td><td>'+EF[a]+'</td><td>'+LS[a]+'</td><td>'+LF[a]+'</td><td>'+slack+'</td></tr>';}
+      elTable.innerHTML=html;
+    }
+    btnNext.disabled=idx>=STEPS.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<STEPS.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+</script>
+</body>
+</html>

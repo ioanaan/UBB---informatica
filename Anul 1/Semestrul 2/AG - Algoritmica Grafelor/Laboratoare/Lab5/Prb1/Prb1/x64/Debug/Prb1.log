@@ -1,0 +1,12 @@
+﻿  main.cpp
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(23,32): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(23,32): warning C4267:         with
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(23,32): warning C4267:         [
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(23,32): warning C4267:             _Ty=int
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(23,32): warning C4267:         ]
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(25,32): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(25,32): warning C4267:         with
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(25,32): warning C4267:         [
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(25,32): warning C4267:             _Ty=int
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\main.cpp(25,32): warning C4267:         ]
+  Prb1.vcxproj -> C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\AG\Lab5\Prb1\x64\Debug\Prb1.exe

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formula lui Cayley — numărul de arbori etichetați</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;letter-spacing:-.5px}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .formula{font-family:var(--mono);font-size:26px;text-align:center;color:var(--purple-d);background:var(--purple-bg);
+    border:0.5px solid var(--purple-d);border-radius:12px;padding:20px;margin:18px 0;font-weight:700}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:60px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.purple{background:var(--purple-bg);border-color:var(--purple-d)}
+  .note.purple b{color:var(--purple-d)}
+  table.cay{border-collapse:collapse;font-family:var(--mono);font-size:14px;margin:14px 0;width:100%}
+  table.cay th,table.cay td{border:0.5px solid var(--line);padding:9px 13px;text-align:center}
+  table.cay th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.cay td.big{color:var(--purple-d);font-weight:700}
+  .interactive{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px;margin:18px 0}
+  .calc-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  select,input[type=number]{font-family:var(--mono);font-size:15px;padding:8px 12px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink)}
+  .result{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green-d)}
+  svg.mini{background:#fbfaf6;border:0.5px solid var(--line);border-radius:10px}
+  .tree-grid{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;justify-content:center}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Formula lui Cayley</h1>
+  <div class="sub">Câți arbori etichetați distincți există · numărarea MST-urilor · seminar 3</div>
+</header>
+
+<nav class="toc">
+  <a href="#formula">Formula</a>
+  <a href="#exemple">Exemple K_n</a>
+  <a href="#calc">Calculator</a>
+  <a href="#mst">Numărarea MST-urilor</a>
+  <a href="#prob9">Problema grea (K1000)</a>
+</nav>
+
+<section id="formula">
+  <h2>Formula</h2>
+  <p class="lead">Formula lui Cayley răspunde la întrebarea: <b>câți arbori etichetați distincți pot fi formați cu n vârfuri?</b> (Echivalent: în câte feluri poți obține un arbore de acoperire dintr-un graf complet K_n.)</p>
+  <div class="formula">|T| = n<sup>n−2</sup></div>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>De unde vine:</b> direct din codarea Prüfer. Fiecare arbore etichetat ↔ o secvență Prüfer de lungime <code>n−2</code>. Fiecare poziție din secvență poate fi oricare din cele n etichete → <code>n × n × ... × n</code> (de n−2 ori) = <code>n^(n−2)</code> secvențe = tot atâția arbori.</p>
+    <p class="muted" style="margin-bottom:0">„Etichetat" = vârfurile sunt distincte (1, 2, 3...). Doi arbori cu aceeași formă dar etichete diferite se numără separat.</p>
+  </div>
+</section>
+
+<section id="exemple">
+  <h2>Exemple pentru K_n</h2>
+  <table class="cay">
+    <tr><th>n</th><th>formula</th><th>număr arbori</th></tr>
+    <tr><td>2</td><td>2<sup>0</sup></td><td class="big">1</td></tr>
+    <tr><td>3</td><td>3<sup>1</sup></td><td class="big">3</td></tr>
+    <tr><td>4</td><td>4<sup>2</sup></td><td class="big">16</td></tr>
+    <tr><td>5</td><td>5<sup>3</sup></td><td class="big">125</td></tr>
+    <tr><td>6</td><td>6<sup>4</sup></td><td class="big">1296</td></tr>
+  </table>
+  <p class="muted">Pentru K3 (3 vârfuri) sunt exact 3 arbori — fiecare obținut eliminând câte una din cele 3 muchii ale triunghiului. Pentru K4 deja sunt 16.</p>
+  <div id="k3-trees" class="tree-grid"></div>
+</section>
+
+<section id="calc">
+  <h2>Calculator interactiv</h2>
+  <p class="lead">Alege n și vezi numărul de arbori etichetați.</p>
+  <div class="interactive">
+    <div class="calc-row">
+      <label>n = </label>
+      <input type="number" id="n-input" value="4" min="2" max="20" style="width:90px">
+      <span style="font-size:18px;color:var(--muted)">→</span>
+      <span class="result" id="cay-result"></span>
+    </div>
+    <div id="cay-explain" class="muted" style="font-family:var(--mono);font-size:14px"></div>
+  </div>
+</section>
+
+<section id="mst">
+  <h2>Aplicație: numărarea arborilor minimi de acoperire</h2>
+  <p class="lead">Un tip de subiect: „câți MST-uri distincte are graful?" Cayley intervine când ai <b>subgrafuri complete cu muchii de aceeași pondere</b>, în care orice arbore de acoperire e la fel de bun.</p>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>Ideea:</b> dacă într-o zonă a grafului toate muchiile au aceeași pondere minimă și formează un graf complet K_k, atunci oricare dintre cei <code>k^(k−2)</code> arbori de acoperire ai acelei zone poate face parte din MST. Le numeri cu Cayley și înmulțești.</p>
+  </div>
+  <div class="note green">💡 <b>Exemplu (seminar, problema 8):</b> pentru K3 cu toate muchiile egale → <code>3^(3−2) = 3</code> MST-uri distincte (eliminând fiecare muchie pe rând).</div>
+</section>
+
+<section id="prob9">
+  <h2>Problema grea — K1000 (seminar, problema 9)</h2>
+  <p class="lead">„Fie K1000 ponderat. Există un K3 cu muchii de pondere 1, restul muchiilor au pondere 2. Câți MST-uri sunt?"</p>
+  <div class="card">
+    <h3>Raționamentul pas cu pas</h3>
+    <div class="keyrow"><span class="k" style="min-width:30px">1.</span><span>Cele 3 muchii de pondere 1 (din K3) sunt cele mai ieftine → orice MST le va folosi. Dar K3 are 3 muchii și un MST al lui K3 are doar 2 → alegi <b>2 din 3</b>, adică <code>3^(3−2) = 3</code> moduri.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:30px">2.</span><span>După ce conectezi K3-ul, îl poți trata ca pe <b>un singur super-vârf</b>. Rămâne un graf complet cu <code>1000 − 2 = 998</code> „vârfuri" (cele 997 vârfuri rămase + super-vârful), toate muchiile de pondere 2.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:30px">3.</span><span>Numărul de arbori de acoperire pe acest K_998 (Cayley) = <code>998^(998−2) = 998^996</code>.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:30px">4.</span><span>Înmulțești cele două alegeri independente:</span></div>
+    <div class="formula" style="font-size:22px">număr MST = 3 · 998<sup>996</sup></div>
+  </div>
+  <div class="note purple">🔑 <b>Tiparul:</b> împarte problema în zone independente, numeri arborii fiecărei zone cu Cayley, înmulțești. Colapsarea unui subgraf complet într-un super-vârf e trucul cheie.</div>
+</section>
+
+<footer>
+  Formula lui Cayley · seminar 3 · n^(n−2) arbori etichetați<br>
+  Prüfer și Huffman sunt în pagini separate.
+</footer>
+</div>
+
+<script>
+/* K3 trees illustration */
+(function(){
+  const box=document.getElementById('k3-trees');
+  // K3 vârfuri 1,2,3 la poziții fixe; 3 arbori = elimini fiecare muchie
+  const pos={1:[60,30],2:[30,90],3:[90,90]};
+  const allEdges=[[1,2],[2,3],[1,3]];
+  // fiecare arbore = 2 muchii (elimin una)
+  for(let skip=0;skip<3;skip++){
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('viewBox','0 0 120 120');svg.setAttribute('width','120');svg.setAttribute('height','120');
+    svg.setAttribute('class','mini');
+    allEdges.forEach((e,i)=>{
+      if(i===skip)return;
+      const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+      l.setAttribute('x1',pos[e[0]][0]);l.setAttribute('y1',pos[e[0]][1]);
+      l.setAttribute('x2',pos[e[1]][0]);l.setAttribute('y2',pos[e[1]][1]);
+      l.setAttribute('stroke','#5d8a2e');l.setAttribute('stroke-width','3');svg.appendChild(l);
+    });
+    [1,2,3].forEach(n=>{
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',pos[n][0]);c.setAttribute('cy',pos[n][1]);c.setAttribute('r',13);
+      c.setAttribute('fill','#1559a3');c.setAttribute('stroke','rgba(0,0,0,.2)');svg.appendChild(c);
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',pos[n][0]);t.setAttribute('y',pos[n][1]);t.setAttribute('fill','#fff');
+      t.setAttribute('font-size','12');t.setAttribute('font-weight','600');t.setAttribute('text-anchor','middle');
+      t.setAttribute('dominant-baseline','central');t.textContent=n;svg.appendChild(t);
+    });
+    const wrap=document.createElement('div');wrap.style.textAlign='center';
+    wrap.appendChild(svg);
+    const cap=document.createElement('div');cap.style.fontSize='11px';cap.style.color='#6b6860';cap.style.fontFamily='monospace';
+    cap.textContent='arbore '+(skip+1);wrap.appendChild(cap);
+    box.appendChild(wrap);
+  }
+})();
+
+/* calculator */
+(function(){
+  const inp=document.getElementById('n-input'),res=document.getElementById('cay-result'),ex=document.getElementById('cay-explain');
+  function calc(){
+    const n=parseInt(inp.value);
+    if(isNaN(n)||n<2){res.textContent='—';ex.textContent='';return;}
+    const val=Math.pow(n,n-2);
+    if(n<=15){res.textContent=val.toLocaleString('ro-RO')+' arbori';}
+    else{res.textContent=n+'^'+(n-2)+' arbori';}
+    ex.innerHTML='= '+n+'<sup>'+n+'−2</sup> = '+n+'<sup>'+(n-2)+'</sup>'+(n<=15?' = '+val.toLocaleString('ro-RO'):'');
+  }
+  inp.oninput=calc;calc();
+})();
+</script>
+</body>
+</html>

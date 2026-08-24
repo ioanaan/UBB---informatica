@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexitate — Sortare topologică & Kosaraju</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5f3aa3;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--blue-bg);color:var(--blue-d)}
+  .tag.p{background:var(--purple-bg);color:var(--purple-d)}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:800px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}.codeblock .var{color:var(--teal-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:90px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.blue{background:var(--blue-bg);border-color:var(--blue-d)}
+  .note.blue b{color:var(--blue-d)}
+  .note.purple{background:var(--purple-bg);border-color:var(--purple-d)}
+  .note.purple b{color:var(--purple-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  button.ctl.purple{background:var(--purple-d);border-color:var(--purple);color:#fff}
+  button.ctl.purple:hover{background:var(--purple)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:340px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2;fill:none;marker-end:url(#arrow)}
+  .edge.tree{stroke:var(--green);stroke-width:3.5;marker-end:url(#arrowG)}
+  .edge.active{stroke:var(--blue);stroke-width:3;stroke-dasharray:5 4;marker-end:url(#arrowB)}
+  .edge.back{stroke:var(--red);stroke-width:2.5;marker-end:url(#arrowR)}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0;transition:fill .3s}
+  .node-c.white{fill:#c9cdd4}
+  .node-c.gray{fill:var(--amber-d);stroke:var(--amber);stroke-width:3}
+  .node-c.black{fill:var(--ink)}
+  .node-c.scc0{fill:#1f6fc4}.node-c.scc1{fill:#5d8a2e}.node-c.scc2{fill:#c47a10}
+  .node-c.scc3{fill:#7a4fc4}.node-c.scc4{fill:#0e8a63}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-t{font-size:10.5px;font-weight:700;text-anchor:middle;font-family:var(--mono);pointer-events:none;fill:var(--blue-d)}
+  .panel-state{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:720px){.panel-state{grid-template-columns:1fr}}
+  .ds{background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:60px}
+  .ds-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+  .ds-items{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:28px}
+  .chip{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:6px;background:var(--blue-bg);color:var(--blue-d);border:0.5px solid var(--blue-d)}
+  .chip.g{background:var(--green-bg);color:var(--green-d);border-color:var(--green-d)}
+  .chip.stk{background:var(--amber-bg);color:var(--amber-d);border-color:var(--amber-d)}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .explain.purple{border-left-color:var(--purple)}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:13px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:6px 9px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res td.hl{color:var(--blue-d)}
+  table.res td.upd{background:var(--green-bg);color:var(--green-d);font-weight:700}
+  .speed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  input[type=range]{width:90px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Conexitate în grafuri orientate</h1>
+  <div class="sub">Sortare topologică &amp; Componente tare conexe (Kosaraju) · ambele pornesc din DFS</div>
+</header>
+
+<nav class="toc">
+  <a href="#dfs">Reamintire DFS</a>
+  <a href="#topo">Sortare topologică</a>
+  <a href="#topoviz">Topo pas cu pas</a>
+  <a href="#kos">Kosaraju</a>
+  <a href="#kosviz">Kosaraju pas cu pas</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="dfs">
+  <h2>Baza comună: timpii DFS</h2>
+  <p class="lead">Ambii algoritmi din pagina asta se sprijină pe DFS și pe <b>timpul de finalizare u.f</b> — momentul în care un vârf devine <b>negru</b> (s-au explorat toți descendenții lui). Reține culorile:</p>
+  <div class="card">
+    <div class="keyrow"><span class="k">alb</span><span>nevizitat încă</span></div>
+    <div class="keyrow"><span class="k">gri</span><span>descoperit, în curs de explorare (pe stiva de recursie)</span></div>
+    <div class="keyrow"><span class="k">negru</span><span>complet explorat — în acest moment se setează <code>u.f</code></span></div>
+  </div>
+  <div class="note blue">💡 Ideea cheie pe care o vei vedea la ambii: <b>vârful care se termină ultimul (u.f maxim) e „cel mai din amonte"</b> — sursa logică a grafului. De aici pleacă atât sortarea topologică, cât și Kosaraju.</div>
+</section>
+
+<!-- ============ SORTARE TOPOLOGICA ============ -->
+<section id="topo">
+  <h2><span class="tag">Subiect</span> Sortare topologică</h2>
+  <p class="lead">Funcționează <b>doar pe un DAG</b> (graf orientat fără circuite). Produce o ordonare liniară a vârfurilor astfel încât <b>pentru orice arc (u,v), u apare înaintea lui v</b>. Modelează precedența: „ce trebuie făcut înainte de ce".</p>
+  <div class="card">
+    <h3>Algoritmul (via DFS)</h3>
+    <p style="margin-bottom:8px">Rulează DFS pe tot graful. De fiecare dată când un vârf se <b>finalizează</b> (devine negru), îl pui în <b>capul</b> unei liste. La final, lista citită de la cap = sortarea topologică.</p>
+    <p class="muted" style="margin-bottom:0">Echivalent: sortează vârfurile <b>descrescător după u.f</b>. Vârful cu cel mai mare timp de finalizare e primul.</p>
+  </div>
+  <div class="codeblock"><span class="fn">SORTARE_TOPOLOGICA</span>(G):
+  apel <span class="fn">DFS</span>(G) pentru a calcula u.f pentru ∀u
+  când un vârf se finalizează (devine negru),
+      inserează-l <span class="kw">în capul</span> unei liste înlănțuite
+  <span class="kw">return</span> lista înlănțuită de vârfuri</div>
+  <div class="note">⏱ Complexitate <code>Θ(V+E)</code> — un singur DFS plus inserări O(1). <b>Lema:</b> G are sortare topologică ⇔ G e DAG (DFS nu găsește niciun arc <span style="color:var(--red-d)">back</span>).</div>
+</section>
+
+<section id="topoviz">
+  <h2>Sortare topologică pas cu pas</h2>
+  <p class="lead">DAG-ul de mai jos modelează niște sarcini cu precedențe. Urmărește DFS: vârf <span style="color:var(--amber-d)">gri</span> = în explorare, <span style="color:var(--ink)">negru</span> = finalizat (intră în capul listei). Muchiile arborelui DFS devin <span style="color:var(--green-d)">verzi</span>.</p>
+  <div class="viz" id="t-viz">
+    <div class="viz-top">
+      <span class="srclabel">timp: <b id="t-time" style="color:var(--blue-d)">0</b> &nbsp;·&nbsp; <span class="step-count" id="t-step"></span></span>
+      <div class="controls">
+        <div class="speed">viteză<input type="range" id="t-speed" min="200" max="1400" value="750" step="50"></div>
+        <button class="ctl" id="t-reset"><span>↺</span>Reset</button>
+        <button class="ctl" id="t-play"><span>▶</span>Auto</button>
+        <button class="ctl primary" id="t-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="t-svg" viewBox="0 0 620 340"></svg>
+    <div class="legend">
+      <span><span class="dot" style="background:#c9cdd4"></span>alb</span>
+      <span><span class="dot" style="background:var(--amber-d)"></span>gri (în stivă)</span>
+      <span><span class="dot" style="background:var(--ink)"></span>negru (finalizat)</span>
+      <span><span class="dot" style="background:var(--green-d)"></span>muchie arbore</span>
+    </div>
+    <div class="panel-state">
+      <div class="ds"><div class="ds-lbl">Stivă recursie DFS (gri)</div><div class="ds-items" id="t-stack"></div></div>
+      <div class="ds"><div class="ds-lbl">Lista topologică (se umple din față)</div><div class="ds-items" id="t-order"></div></div>
+    </div>
+    <div class="explain" id="t-explain">Apasă „Pas →". Pornim DFS din primul vârf alb.</div>
+    <table class="res" id="t-table"></table>
+  </div>
+  <div class="note green">💡 <b>Citește rezultatul:</b> ordinea în care vârfurile devin negre, inversată, dă sortarea. Cine se finalizează ultimul stă primul în listă.</div>
+</section>
+
+<!-- ============ KOSARAJU ============ -->
+<section id="kos">
+  <h2><span class="tag p">Subiect</span> Componente tare conexe — Kosaraju</h2>
+  <p class="lead">O <b>componentă tare conexă (CTC)</b> a unui graf orientat e un subset maximal de vârfuri în care, între oricare două, există drum în <b>ambele</b> sensuri. Kosaraju le găsește cu <b>două DFS-uri</b> și o transpunere de graf.</p>
+  <div class="card">
+    <h3>Cei 3 pași</h3>
+    <div class="keyrow"><span class="k">1. DFS(G)</span><span>rulează DFS pe graful original și reține ordinea <b>descrescătoare după u.f</b> (vârfurile puse pe o stivă pe măsură ce se finalizează).</span></div>
+    <div class="keyrow"><span class="k">2. Gᵀ</span><span>construiește <b>transpusul</b>: inversezi sensul fiecărui arc — (u,v) devine (v,u).</span></div>
+    <div class="keyrow"><span class="k">3. DFS(Gᵀ)</span><span>rulează DFS pe Gᵀ, dar pornind vârfurile <b>în ordinea descrescătoare după u.f</b> (din stivă). Fiecare arbore obținut = o componentă tare conexă.</span></div>
+  </div>
+  <div class="codeblock"><span class="fn">KOSARAJU</span>(G):
+  <span class="kw">1.</span> apel <span class="fn">DFS</span>(G), reține vârfurile pe o stivă în ordinea finalizării u.f
+  <span class="kw">2.</span> calculează Gᵀ            <span class="cm">// inversezi toate arcele</span>
+  <span class="kw">3.</span> apel <span class="fn">DFS</span>(Gᵀ), dar bucla principală ia vârfurile
+       în ordine descrescătoare după u.f (scoți din stivă)
+  <span class="kw">4.</span> fiecare arbore din pădurea DFS(Gᵀ) = o componentă tare conexă</div>
+  <div class="note purple">⏱ Complexitate <code>Θ(V+E)</code>: două DFS-uri + transpunerea (tot O(V+E) pe listă de adiacență). <b>Graful comprimat</b> al CTC-urilor (fiecare componentă = un super-vârf) e întotdeauna un <b>DAG</b>.</div>
+</section>
+
+<section id="kosviz">
+  <h2>Kosaraju pas cu pas</h2>
+  <p class="lead">Mai jos vezi cele 3 faze în secvență. Faza 1 (DFS pe G) umple stiva după u.f. Faza 2 inversează arcele. Faza 3 (DFS pe Gᵀ) colorează fiecare componentă tare conexă cu o culoare distinctă.</p>
+  <div class="viz" id="k-viz">
+    <div class="viz-top">
+      <span class="srclabel">fază: <b id="k-phase" style="color:var(--purple-d)">1 — DFS(G)</b> &nbsp;·&nbsp; <span class="step-count" id="k-step"></span></span>
+      <div class="controls">
+        <div class="speed">viteză<input type="range" id="k-speed" min="200" max="1400" value="700" step="50"></div>
+        <button class="ctl" id="k-reset"><span>↺</span>Reset</button>
+        <button class="ctl" id="k-play"><span>▶</span>Auto</button>
+        <button class="ctl purple" id="k-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="k-svg" viewBox="0 0 620 340"></svg>
+    <div class="legend" id="k-legend">
+      <span><span class="dot" style="background:#c9cdd4"></span>alb</span>
+      <span><span class="dot" style="background:var(--amber-d)"></span>gri</span>
+      <span><span class="dot" style="background:var(--ink)"></span>negru / faza 1</span>
+    </div>
+    <div class="panel-state">
+      <div class="ds"><div class="ds-lbl">Stivă după u.f (faza 1)</div><div class="ds-items" id="k-stack"></div></div>
+      <div class="ds"><div class="ds-lbl">Componente tare conexe găsite</div><div class="ds-items" id="k-sccs"></div></div>
+    </div>
+    <div class="explain purple" id="k-explain">Apasă „Pas →". Faza 1: DFS pe graful original pentru a calcula ordinea de finalizare.</div>
+  </div>
+  <div class="note green">💡 <b>De ce funcționează:</b> vârful cu u.f maxim e în CTC-ul „sursă" al grafului comprimat. Pornind DFS pe Gᵀ de la el, nu poți „scăpa" din componenta lui (arcele spre alte componente sunt inversate) → fiecare arbore rămâne fix o componentă.</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Conexitate · Sortare topologică &amp; Kosaraju · ambele pe DFS + timpii de finalizare<br>
+  Categoria „conexitate &amp; structură" din lista de colocviu.
+</footer>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function defsArrows(svg){
+  const defs=document.createElementNS(NS,'defs');
+  const mk=(id,color)=>{
+    const m=document.createElementNS(NS,'marker');
+    m.setAttribute('id',id);m.setAttribute('viewBox','0 0 10 10');m.setAttribute('refX','9');m.setAttribute('refY','5');
+    m.setAttribute('markerWidth','7');m.setAttribute('markerHeight','7');m.setAttribute('orient','auto-start-reverse');
+    const p=document.createElementNS(NS,'path');p.setAttribute('d','M0,0 L10,5 L0,10 z');p.setAttribute('fill',color);
+    m.appendChild(p);defs.appendChild(m);
+  };
+  mk('arrow','#b8b4ab');mk('arrowG','#5d8a2e');mk('arrowB','#1f6fc4');mk('arrowR','#d13b3a');
+  svg.appendChild(defs);
+}
+// shorten line endpoints so arrowheads sit at node border
+function shorten(x1,y1,x2,y2,r){
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);
+  return [x1+dx/len*r, y1+dy/len*r, x2-dx/len*r, y2-dy/len*r];
+}
+
+/* ============================================================
+   SORTARE TOPOLOGICA — DAG
+   ============================================================ */
+const T_V=[1,2,3,4,5,6];
+const T_EDGES=[[1,2],[1,3],[2,4],[3,4],[3,5],[4,6],[5,6]];
+const T_POS={1:[70,170],2:[210,80],3:[210,260],4:[370,170],5:[370,300],6:[540,200]};
+const T_ADJ={};T_V.forEach(v=>T_ADJ[v]=[]);
+T_EDGES.forEach(([a,b])=>T_ADJ[a].push(b));
+T_V.forEach(v=>T_ADJ[v].sort((a,b)=>a-b));
+
+function buildTopo(){
+  const steps=[];
+  const color={},d={},f={};let time=0;const order=[];const stack=[];
+  T_V.forEach(v=>{color[v]='white';d[v]=0;f[v]=0;});
+  const treeEdges=new Set();
+  const snap=(extra)=>({color:{...color},d:{...d},f:{...f},time,
+      order:[...order],stack:[...stack],tree:new Set(treeEdges),...extra});
+  steps.push(snap({active:null,msg:'Inițializare: toate vârfurile albe. Începem DFS din cel mai mic vârf alb.'}));
+  function visit(u){
+    time++;d[u]=time;color[u]='gray';stack.push(u);
+    steps.push(snap({active:null,node:u,msg:`<b>Descopăr ${u}</b> (gri, d=${d[u]}). Intră pe stiva de recursie.`}));
+    for(const v of T_ADJ[u]){
+      if(color[v]==='white'){
+        treeEdges.add(u+'-'+v);
+        steps.push(snap({active:[u,v],node:u,msg:`Din ${u}: vecinul ${v} e alb → muchie de arbore ${u}→${v}, cobor în ${v}.`}));
+        visit(v);
+        steps.push(snap({active:null,node:u,msg:`Revin în ${u} după ce am terminat ${v}.`}));
+      }else{
+        steps.push(snap({active:[u,v],node:u,msg:`Din ${u}: vecinul ${v} nu e alb (${color[v]}) — îl sar.`}));
+      }
+    }
+    color[u]='black';time++;f[u]=time;stack.pop();order.unshift(u);
+    steps.push(snap({active:null,node:u,
+      msg:`<b>Finalizez ${u}</b> (negru, f=${f[u]}). Îl pun în <b>capul</b> listei → ordine: [${order.join(', ')}].`}));
+  }
+  for(const s of T_V) if(color[s]==='white'){
+    steps.push(snap({active:null,msg:`Bucla principală: ${s} e alb → pornesc DFS_VISIT(${s}).`}));
+    visit(s);
+  }
+  steps.push(snap({active:null,final:true,
+    msg:`<b>Gata!</b> Sortare topologică: <b>[${order.join(' → ')}]</b>. Orice arc merge de la stânga la dreapta în această ordine.`}));
+  return steps;
+}
+const TOPO=buildTopo();
+
+function drawGraph(svgId, V, EDGES, POS, idPrefix, directed){
+  const svg=document.getElementById(svgId);svg.innerHTML='';defsArrows(svg);
+  EDGES.forEach(([a,b],i)=>{
+    let [x1,y1]=POS[a],[x2,y2]=POS[b];
+    [x1,y1,x2,y2]=shorten(x1,y1,x2,y2,21);
+    const l=document.createElementNS(NS,'line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('class','edge');l.id=idPrefix+'e'+i;svg.appendChild(l);
+  });
+  V.forEach(n=>{
+    const g=document.createElementNS(NS,'g');
+    const c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',19);
+    c.setAttribute('class','node-c white');c.id=idPrefix+'n'+n;g.appendChild(c);
+    const t=document.createElementNS(NS,'text');t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+    const tl=document.createElementNS(NS,'text');tl.setAttribute('x',POS[n][0]);tl.setAttribute('y',POS[n][1]-28);
+    tl.setAttribute('class','node-t');tl.id=idPrefix+'t'+n;g.appendChild(tl);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0,timer=null;
+  drawGraph('t-svg',T_V,T_EDGES,T_POS,'t-',true);
+  const elStep=document.getElementById('t-step'),elTime=document.getElementById('t-time'),
+    elStack=document.getElementById('t-stack'),elOrder=document.getElementById('t-order'),
+    elEx=document.getElementById('t-explain'),elTable=document.getElementById('t-table'),
+    btnNext=document.getElementById('t-next'),btnReset=document.getElementById('t-reset'),
+    btnPlay=document.getElementById('t-play'),speed=document.getElementById('t-speed');
+  function render(){
+    const s=TOPO[idx];
+    elStep.textContent='pas '+idx+' / '+(TOPO.length-1);
+    elTime.textContent=s.time;
+    T_V.forEach(n=>{
+      const c=document.getElementById('t-n'+n);
+      c.setAttribute('class','node-c '+s.color[n]);
+      const tl=document.getElementById('t-t'+n);
+      tl.textContent=(s.d[n]?('d'+s.d[n]):'')+(s.f[n]?('/f'+s.f[n]):'');
+    });
+    T_EDGES.forEach(([a,b],i)=>{
+      const e=document.getElementById('t-e'+i);let cls='edge';
+      if(s.tree.has(a+'-'+b))cls='edge tree';
+      if(s.active&&s.active[0]===a&&s.active[1]===b)cls='edge active';
+      e.setAttribute('class',cls);
+    });
+    elStack.innerHTML='';
+    if(s.stack.length)s.stack.forEach(n=>{const x=document.createElement('span');x.className='chip stk';x.textContent=n;elStack.appendChild(x);});
+    else elStack.innerHTML='<span class="muted" style="font-size:12px">— goală —</span>';
+    elOrder.innerHTML='';
+    if(s.order.length)s.order.forEach(n=>{const x=document.createElement('span');x.className='chip g';x.textContent=n;elOrder.appendChild(x);});
+    else elOrder.innerHTML='<span class="muted" style="font-size:12px">— goală —</span>';
+    elEx.innerHTML=s.msg;
+    let html='<tr><th>v</th>';T_V.forEach(n=>html+='<th>'+n+'</th>');html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">d</td>';T_V.forEach(n=>html+='<td class="hl">'+(s.d[n]||'–')+'</td>');html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">f</td>';T_V.forEach(n=>html+='<td class="'+(s.f[n]?'upd':'')+'">'+(s.f[n]||'–')+'</td>');html+='</tr>';
+    elTable.innerHTML=html;
+    btnNext.disabled=idx>=TOPO.length-1;
+  }
+  function next(){if(idx<TOPO.length-1){idx++;render();}else stop();}
+  function reset(){stop();idx=0;render();}
+  function stop(){if(timer){clearInterval(timer);timer=null;btnPlay.innerHTML='<span>▶</span>Auto';}}
+  function play(){if(timer){stop();return;}if(idx>=TOPO.length-1)idx=0;btnPlay.innerHTML='<span>⏸</span>Stop';
+    timer=setInterval(()=>{if(idx>=TOPO.length-1){stop();}else{idx++;render();}},1600-speed.value+200);}
+  btnNext.onclick=()=>{stop();next();};btnReset.onclick=reset;btnPlay.onclick=play;
+  speed.oninput=()=>{if(timer){stop();play();}};
+  render();
+})();
+
+/* ============================================================
+   KOSARAJU
+   ============================================================ */
+const K_V=[1,2,3,4,5,6,7,8];
+// arcele: trei CTC -> {1,2,3}, {4,5}, {6,7,8}
+const K_EDGES=[[1,2],[2,3],[3,1],[3,4],[4,5],[5,4],[5,6],[6,7],[7,8],[8,6],[2,6]];
+const K_POS={1:[80,90],2:[80,250],3:[200,170],4:[330,90],5:[330,250],6:[470,90],7:[560,180],8:[470,270]};
+const K_ADJ={};K_V.forEach(v=>K_ADJ[v]=[]);K_EDGES.forEach(([a,b])=>K_ADJ[a].push(b));
+const K_ADJT={};K_V.forEach(v=>K_ADJT[v]=[]);K_EDGES.forEach(([a,b])=>K_ADJT[b].push(a));
+K_V.forEach(v=>{K_ADJ[v].sort((a,b)=>a-b);K_ADJT[v].sort((a,b)=>a-b);});
+
+function buildKosaraju(){
+  const steps=[];
+  const color={};const stackF=[];const sccOf={};
+  K_V.forEach(v=>{color[v]='white';sccOf[v]=-1;});
+  const transposed={val:false};
+  const snap=(extra)=>({color:{...color},stackF:[...stackF],sccOf:{...sccOf},
+    transposed:transposed.val,...extra});
+  // ---- Phase 1: DFS(G) ----
+  steps.push(snap({phase:'1 — DFS(G)',active:null,
+    msg:'<b>Faza 1.</b> DFS pe graful original G. Când un vârf se finalizează, îl pun pe stivă (ordine după u.f).'}));
+  function visit1(u){
+    color[u]='gray';
+    steps.push(snap({phase:'1 — DFS(G)',active:null,node:u,
+      msg:`Descopăr ${u} (gri). Explorez vecinii în G.`}));
+    for(const v of K_ADJ[u]) if(color[v]==='white'){
+      steps.push(snap({phase:'1 — DFS(G)',active:[u,v],node:u,msg:`${u}→${v}: ${v} alb, cobor.`}));
+      visit1(v);
+    }
+    color[u]='black';stackF.push(u);
+    steps.push(snap({phase:'1 — DFS(G)',active:null,node:u,
+      msg:`<b>Finalizez ${u}</b> → pe stivă. Stivă: [${stackF.join(', ')}].`}));
+  }
+  for(const s of K_V) if(color[s]==='white') visit1(s);
+  // ---- Phase 2: transpose ----
+  transposed.val=true;
+  steps.push(snap({phase:'2 — Gᵀ',active:null,
+    msg:`<b>Faza 2.</b> Inversez toate arcele → Gᵀ. Stiva finală (după u.f): [${stackF.slice().reverse().join(', ')}] de sus în jos.`}));
+  // ---- Phase 3: DFS(Gᵀ) in reverse finish order ----
+  K_V.forEach(v=>color[v]='white');
+  let sccId=-1;const order=stackF.slice().reverse(); // top of stack first
+  const sccList=[];
+  steps.push(snap({phase:'3 — DFS(Gᵀ)',active:null,
+    msg:'<b>Faza 3.</b> DFS pe Gᵀ, luând vârfurile în ordinea descrescătoare după u.f (vârful stivei primul). Fiecare arbore = o CTC.'}));
+  function visit3(u){
+    color[u]='gray';sccOf[u]=sccId;
+    steps.push(snap({phase:'3 — DFS(Gᵀ)',active:null,node:u,sccList:sccList.map(a=>[...a]),
+      msg:`${u} → componenta ${sccId+1}.`}));
+    for(const v of K_ADJT[u]) if(color[v]==='white'){
+      steps.push(snap({phase:'3 — DFS(Gᵀ)',active:[u,v],node:u,sccList:sccList.map(a=>[...a]),
+        msg:`În Gᵀ: ${u}→${v} (era ${v}→${u} în G), ${v} alb → aceeași componentă.`}));
+      visit3(v);
+    }
+    color[u]='black';
+  }
+  for(const s of order) if(color[s]==='white'){
+    sccId++;sccList.push([]);
+    steps.push(snap({phase:'3 — DFS(Gᵀ)',active:null,node:s,sccList:sccList.map(a=>[...a]),
+      msg:`Iau ${s} din vârful stivei (u.f maxim rămas) → pornesc componenta ${sccId+1}.`}));
+    visit3(s);
+    // record members
+    sccList[sccId]=K_V.filter(v=>sccOf[v]===sccId);
+    steps.push(snap({phase:'3 — DFS(Gᵀ)',active:null,sccList:sccList.map(a=>[...a]),
+      msg:`<b>Componenta ${sccId+1} completă:</b> {${sccList[sccId].join(', ')}}.`}));
+  }
+  steps.push(snap({phase:'gata',active:null,final:true,sccList:sccList.map(a=>[...a]),
+    msg:`<b>Gata!</b> ${sccId+1} componente tare conexe: ${sccList.map((a,i)=>'{'+a.join(',')+'}').join(', ')}.`}));
+  return steps;
+}
+const KOS=buildKosaraju();
+
+(function(){
+  let idx=0,timer=null;
+  function drawK(){
+    const svg=document.getElementById('k-svg');svg.innerHTML='';defsArrows(svg);
+    const s=KOS[idx];const E = s && s.transposed ? K_EDGES.map(([a,b])=>[b,a]) : K_EDGES;
+    E.forEach(([a,b],i)=>{
+      let [x1,y1]=K_POS[a],[x2,y2]=K_POS[b];
+      [x1,y1,x2,y2]=shorten(x1,y1,x2,y2,21);
+      const l=document.createElementNS(NS,'line');
+      l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+      l.setAttribute('class','edge');l.id='k-e'+i;svg.appendChild(l);
+    });
+    K_V.forEach(n=>{
+      const g=document.createElementNS(NS,'g');
+      const c=document.createElementNS(NS,'circle');
+      c.setAttribute('cx',K_POS[n][0]);c.setAttribute('cy',K_POS[n][1]);c.setAttribute('r',19);
+      c.setAttribute('class','node-c white');c.id='k-n'+n;g.appendChild(c);
+      const t=document.createElementNS(NS,'text');t.setAttribute('x',K_POS[n][0]);t.setAttribute('y',K_POS[n][1]);
+      t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+      svg.appendChild(g);
+    });
+    return E;
+  }
+  const elStep=document.getElementById('k-step'),elPhase=document.getElementById('k-phase'),
+    elStack=document.getElementById('k-stack'),elScc=document.getElementById('k-sccs'),
+    elEx=document.getElementById('k-explain'),
+    btnNext=document.getElementById('k-next'),btnReset=document.getElementById('k-reset'),
+    btnPlay=document.getElementById('k-play'),speed=document.getElementById('k-speed');
+  function render(){
+    const s=KOS[idx];
+    const E=drawK();
+    elStep.textContent='pas '+idx+' / '+(KOS.length-1);
+    elPhase.textContent=s.phase;
+    K_V.forEach(n=>{
+      const c=document.getElementById('k-n'+n);
+      let cls='node-c';
+      if(s.sccOf[n]>=0) cls='node-c scc'+(s.sccOf[n]%5);
+      else cls='node-c '+s.color[n];
+      c.setAttribute('class',cls);
+    });
+    E.forEach(([a,b],i)=>{
+      const e=document.getElementById('k-e'+i);let cls='edge';
+      if(s.active&&s.active[0]===a&&s.active[1]===b) cls='edge active';
+      e.setAttribute('class',cls);
+    });
+    elStack.innerHTML='';
+    if(s.stackF.length)s.stackF.forEach(n=>{const x=document.createElement('span');x.className='chip stk';x.textContent=n;elStack.appendChild(x);});
+    else elStack.innerHTML='<span class="muted" style="font-size:12px">— goală —</span>';
+    elScc.innerHTML='';
+    const lst=s.sccList||[];
+    if(lst.length)lst.forEach((arr,i)=>{const x=document.createElement('span');x.className='chip';
+      x.style.background=['#e3eefb','#e8f3d8','#fbf0d8','#ece3fb','#dcf2ea'][i%5];
+      x.textContent='{'+arr.join(',')+'}';elScc.appendChild(x);});
+    else elScc.innerHTML='<span class="muted" style="font-size:12px">— niciuna încă —</span>';
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=KOS.length-1;
+  }
+  function next(){if(idx<KOS.length-1){idx++;render();}else stop();}
+  function reset(){stop();idx=0;render();}
+  function stop(){if(timer){clearInterval(timer);timer=null;btnPlay.innerHTML='<span>▶</span>Auto';}}
+  function play(){if(timer){stop();return;}if(idx>=KOS.length-1)idx=0;btnPlay.innerHTML='<span>⏸</span>Stop';
+    timer=setInterval(()=>{if(idx>=KOS.length-1){stop();}else{idx++;render();}},1600-speed.value+200);}
+  btnNext.onclick=()=>{stop();next();};btnReset.onclick=reset;btnPlay.onclick=play;
+  speed.oninput=()=>{if(timer){stop();play();}};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Pe ce tip de graf se poate aplica sortarea topologică?',
+   opts:['Orice graf neorientat','Doar pe DAG (orientat fără circuite)','Doar pe grafuri conexe','Doar pe arbori'],correct:1,
+   why:'Sortarea topologică există <b>doar pe un DAG</b>. Dacă graful are un circuit, nu poate exista o ordine liniară (apar dependențe ciclice).'},
+  {q:'Cum obții ordinea topologică din DFS?',
+   opts:['Crescător după timpul de descoperire d','Descrescător după timpul de finalizare f','Ordinea alfabetică','Ordinea din coadă (BFS)'],correct:1,
+   why:'Inserezi fiecare vârf în <b>capul</b> listei când se finalizează → echivalent cu a sorta <b>descrescător după u.f</b>.'},
+  {q:'Ce este o componentă tare conexă (CTC)?',
+   opts:['Un subset de vârfuri fără muchii','Subset maximal cu drum în ambele sensuri între oricare două vârfuri','Cel mai scurt drum','Un arbore de acoperire'],correct:1,
+   why:'O <b>CTC</b> e un subset maximal de vârfuri în care, între oricare două, există drum în <b>ambele</b> sensuri (te poți întoarce mereu).'},
+  {q:'Câte parcurgeri DFS folosește Kosaraju?',
+   opts:['Una','Două (pe G și pe Gᵀ)','Trei','Depinde de numărul de vârfuri'],correct:1,
+   why:'Kosaraju face <b>două DFS-uri</b>: unul pe G (pentru ordinea după u.f) și unul pe Gᵀ (transpusul), în ordinea descrescătoare a finalizării.'},
+  {q:'Ce este Gᵀ în Kosaraju?',
+   opts:['Graful fără muchii','Transpusul: toate arcele inversate','Arborele DFS','Graful complet'],correct:1,
+   why:'<b>Gᵀ</b> = transpusul lui G: fiecare arc (u,v) devine (v,u). Componentele tare conexe sunt aceleași în G și în Gᵀ.'},
+  {q:'Ce structură formează componentele tare conexe „comprimate"?',
+   opts:['Un alt graf cu cicluri','Întotdeauna un DAG','Un arbore','Un graf complet'],correct:1,
+   why:'Dacă contragi fiecare CTC într-un super-vârf, graful rezultat e mereu un <b>DAG</b> — nu mai există cicluri între componente.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

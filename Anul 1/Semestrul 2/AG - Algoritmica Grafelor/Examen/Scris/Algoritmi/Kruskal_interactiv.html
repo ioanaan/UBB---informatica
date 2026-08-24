@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmul lui Kruskal — arbore minim de acoperire</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--teal-bg);color:var(--teal-d)}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}.codeblock .var{color:var(--teal-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:90px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.teal{background:var(--teal-bg);border-color:var(--teal-d)}
+  .note.teal b{color:var(--teal-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--teal);background:var(--teal-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--teal-d);border-color:var(--teal);color:#fff}
+  button.ctl.primary:hover{background:var(--teal)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:330px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2;fill:none}
+  .edge.mst{stroke:var(--green);stroke-width:4}
+  .edge.consider{stroke:var(--amber);stroke-width:4;stroke-dasharray:6 4}
+  .edge.reject{stroke:var(--red);stroke-width:2.5;stroke-dasharray:2 3}
+  .ew{font-family:var(--mono);font-size:13px;font-weight:700;fill:#3a3833}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;transition:fill .3s}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .explain{background:#f7f5ef;border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .explain.reject{border-left-color:var(--red)}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .edgelist{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+  .ec{font-family:var(--mono);font-size:13px;padding:5px 11px;border-radius:7px;background:var(--panel2);color:var(--muted);border:0.5px solid var(--line);transition:.2s}
+  .ec.now{background:var(--amber-bg);color:var(--amber-d);border-color:var(--amber);font-weight:700;transform:scale(1.08)}
+  .ec.added{background:var(--green-bg);color:var(--green-d);border-color:var(--green-d)}
+  .ec.rejected{background:var(--red-bg);color:var(--red-d);border-color:var(--red-d);text-decoration:line-through}
+  .ds{background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;margin-top:12px}
+  .ds-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+  .components{display:flex;gap:10px;flex-wrap:wrap}
+  .comp{font-family:var(--mono);font-size:13px;padding:5px 11px;border-radius:7px;border:0.5px solid var(--line);background:var(--panel)}
+  .speed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  input[type=range]{width:90px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Algoritmul lui Kruskal</h1>
+  <div class="sub">Arbore minim de acoperire (MST) · muchii sortate + union-find · seminar 3</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Strategia</a>
+  <a href="#unionfind">Union-Find</a>
+  <a href="#cod">Cod</a>
+  <a href="#viz">Kruskal pas cu pas</a>
+  <a href="#vs">Prim vs Kruskal</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Strategia lui Kruskal</h2>
+  <p class="lead">Kruskal abordează MST-ul complet diferit de Prim. Nu crește un singur arbore — în schimb, ia <b>toate muchiile sortate crescător după pondere</b> și le adaugă pe rând, sărind peste cele care ar crea un ciclu.</p>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>Ideea:</b> parcurgi muchiile de la cea mai ieftină la cea mai scumpă. Pentru fiecare muchie te întrebi: „leagă două componente <b>diferite</b>?" Dacă da → o adaugi (unești componentele). Dacă nu (ar crea ciclu) → o respingi.</p>
+    <p class="muted" style="margin-bottom:0">La început fiecare vârf e propria lui „insulă". Muchiile adăugate unesc insulele treptat, până rămâne una singură = arborele complet.</p>
+  </div>
+  <div class="note teal">Kruskal lucrează cu o <b>pădure</b> de arbori care crește, nu cu un singur arbore ca Prim. La final pădurea devine un singur arbore.</div>
+</section>
+
+<section id="unionfind">
+  <h2>Union-Find (mulțimi disjuncte)</h2>
+  <p class="lead">Cheia lui Kruskal e să verifice rapid „aceste două vârfuri sunt deja în aceeași componentă?". Pentru asta folosește structura <b>union-find</b> (disjoint-set).</p>
+  <div class="card">
+    <div class="keyrow"><span class="k">make_set(v)</span><span>creează o mulțime cu un singur vârf (la început fiecare vârf e singur).</span></div>
+    <div class="keyrow"><span class="k">find_set(v)</span><span>spune din ce componentă face parte v (returnează „reprezentantul" ei).</span></div>
+    <div class="keyrow"><span class="k">union(u,v)</span><span>unește cele două componente într-una singură.</span></div>
+  </div>
+  <div class="note"><b>Testul de ciclu:</b> dacă <code>find_set(u) == find_set(v)</code>, cele două capete ale muchiei sunt deja în aceeași componentă → adăugarea muchiei ar crea un ciclu → respingem.</div>
+</section>
+
+<section id="cod">
+  <h2>Implementarea</h2>
+  <div class="codeblock"><span class="fn">MST_KRUSKAL</span>(G, w):
+  A = ∅
+  <span class="kw">for</span> fiecare v ∈ V:
+      make_set(v)                <span class="cm">// fiecare vârf, propria mulțime</span>
+  sortează muchiile crescător după w
+  <span class="kw">for</span> fiecare (u,v) ∈ E (în ordine crescătoare):
+      <span class="kw">if</span> find_set(u) ≠ find_set(v):   <span class="cm">// componente diferite?</span>
+          A = A ∪ {(u,v)}        <span class="cm">// adaug muchia</span>
+          union(u, v)            <span class="cm">// unesc componentele</span>
+  <span class="kw">return</span> A</div>
+  <p class="muted">Complexitate: <code>O(E log E)</code> — dominată de sortarea muchiilor.</p>
+</section>
+
+<section id="viz">
+  <h2><span class="tag">Subiect 6</span> Kruskal pas cu pas</h2>
+  <p class="lead">Același graf. Muchiile sunt deja sortate crescător (banda de sus). La fiecare pas analizezi următoarea muchie: <span style="color:var(--green-d)">verde</span> = adăugată, <span style="color:var(--red-d)">roșu tăiat</span> = respinsă (ar crea ciclu). Vezi și componentele unindu-se.</p>
+  <div class="viz" id="k-viz">
+    <div class="viz-top">
+      <span class="srclabel">cost MST: <b id="k-cost" style="color:var(--green-d)">0</b> &nbsp;·&nbsp; muchii: <b id="k-count" style="color:var(--green-d)">0</b>/6 &nbsp;·&nbsp; <span class="step-count" id="k-step"></span></span>
+      <div class="controls">
+        <div class="speed">viteză<input type="range" id="k-speed" min="200" max="1400" value="700" step="50"></div>
+        <button class="ctl" id="k-reset"><span>↺</span>Reset</button>
+        <button class="ctl" id="k-play"><span>▶</span>Auto</button>
+        <button class="ctl primary" id="k-next">Pas →</button>
+      </div>
+    </div>
+    <div class="ds" style="margin-top:0;margin-bottom:14px">
+      <div class="ds-lbl">Muchii sortate crescător</div>
+      <div class="edgelist" id="k-edgelist"></div>
+    </div>
+    <svg class="graph" id="k-svg" viewBox="0 0 620 330"></svg>
+    <div class="ds">
+      <div class="ds-lbl">Componente (union-find)</div>
+      <div class="components" id="k-components"></div>
+    </div>
+    <div class="explain" id="k-explain">Apasă „Pas →". Prima muchie analizată: 1-2(1), cea mai ieftină.</div>
+  </div>
+  <div class="note green">💡 <b>Rezultat:</b> MST = {1-2, 2-3, 1-4, 2-5, 4-7, 3-6}, cost <b>21</b> — exact ca la Prim. Diferă doar drumul: Kruskal le-a luat în ordinea ponderii (1,2,4,4,4,6), Prim în ordinea creșterii arborelui.</div>
+</section>
+
+<section id="vs">
+  <h2>Prim vs Kruskal</h2>
+  <table style="width:100%;border-collapse:collapse;margin:14px 0;font-size:14px">
+    <tr><th style="border:0.5px solid var(--line);padding:10px;background:var(--panel2);text-align:left">Criteriu</th><th style="border:0.5px solid var(--line);padding:10px;background:var(--panel2);text-align:left">Prim</th><th style="border:0.5px solid var(--line);padding:10px;background:var(--panel2);text-align:left">Kruskal</th></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:10px;color:var(--muted);font-weight:600">Abordare</td><td style="border:0.5px solid var(--line);padding:10px">Crește UN arbore din rădăcină</td><td style="border:0.5px solid var(--line);padding:10px">Unește o PĂDURE de arbori</td></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:10px;color:var(--muted);font-weight:600">Selecție</td><td style="border:0.5px solid var(--line);padding:10px">Cea mai ieftină muchie din arbore spre exterior</td><td style="border:0.5px solid var(--line);padding:10px">Cea mai ieftină muchie globală care nu face ciclu</td></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:10px;color:var(--muted);font-weight:600">Structură</td><td style="border:0.5px solid var(--line);padding:10px">Coadă de priorități</td><td style="border:0.5px solid var(--line);padding:10px">Union-find + sortare</td></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:10px;color:var(--muted);font-weight:600">Rezultat</td><td style="border:0.5px solid var(--line);padding:10px" colspan="2">Același MST, același cost (21 aici)</td></tr>
+  </table>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Algoritmul lui Kruskal · subiectul 6 · arbore minim de acoperire<br>
+  Prim e în pagina separată. Ambele dau MST cost 21.
+</footer>
+</div>
+
+<script>
+const EDGES=[[1,2,1],[1,4,4],[2,3,2],[2,4,6],[2,5,4],[3,5,5],[3,6,6],[4,7,4],[5,6,8],[5,7,7],[6,7,30]];
+const V=[1,2,3,4,5,6,7];
+const POS={
+  1:[60,175], 2:[185,90], 3:[330,70], 4:[185,265],
+  5:[360,200], 6:[490,110], 7:[420,290]
+};
+/* sortare crescătoare; tie-break stabil pe (a,b) */
+const SORTED=[...EDGES].map((e,i)=>e).sort((x,y)=>x[2]-y[2]||x[0]-y[0]||x[1]-y[1]);
+
+/* build Kruskal steps */
+function buildKruskal(){
+  const steps=[];
+  const parent={};V.forEach(v=>parent[v]=v);
+  function find(x){while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;}
+  function comps(){
+    const m={};V.forEach(v=>{const r=find(v);(m[r]=m[r]||[]).push(v);});
+    return Object.values(m).map(a=>a.sort((p,q)=>p-q));
+  }
+  const mst=[];let cost=0;
+  steps.push({i:-1,mst:[],cost:0,comps:comps(),action:null,edge:null,
+    msg:`Inițializare: fiecare vârf e propria componentă. Muchiile sunt sortate crescător.`});
+  for(let i=0;i<SORTED.length;i++){
+    const[a,b,w]=SORTED[i];
+    const fa=find(a),fb=find(b);
+    if(fa!==fb){
+      parent[fa]=fb;mst.push([a,b,w]);cost+=w;
+      steps.push({i,mst:mst.map(m=>[...m]),cost,comps:comps(),action:'add',edge:[a,b,w],
+        msg:`<b>${a}-${b}(${w})</b>: componente diferite (${a}∈una, ${b}∈alta) → <b style="color:var(--green-d)">ADAUG</b>. Unesc componentele. Cost: ${cost}.`});
+    } else {
+      steps.push({i,mst:mst.map(m=>[...m]),cost,comps:comps(),action:'reject',edge:[a,b,w],
+        msg:`<b>${a}-${b}(${w})</b>: ${a} și ${b} sunt DEJA în aceeași componentă → ar crea ciclu → <b style="color:var(--red-d)">RESPING</b>.`});
+    }
+    if(mst.length===V.length-1){
+      steps.push({i,mst:mst.map(m=>[...m]),cost,comps:comps(),action:'done',edge:null,final:true,
+        msg:`<b>Gata!</b> Am ${V.length-1} muchii = arbore complet. Restul muchiilor ar crea doar cicluri. Cost total MST: <b>${cost}</b>.`});
+      break;
+    }
+  }
+  return steps;
+}
+const KRUSKAL=buildKruskal();
+
+function edgeKey(a,b){return Math.min(a,b)+'-'+Math.max(a,b);}
+function drawK(){
+  const svg=document.getElementById('k-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  EDGES.forEach(([a,b,w],i)=>{
+    const[x1,y1]=POS[a],[x2,y2]=POS[b];
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('class','edge');l.id='k-e'+edgeKey(a,b);svg.appendChild(l);
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',mx);t.setAttribute('y',my-3);
+    t.setAttribute('class','ew');t.setAttribute('text-anchor','middle');t.textContent=w;
+    t.setAttribute('paint-order','stroke');t.setAttribute('stroke','#fbfaf6');t.setAttribute('stroke-width','3');
+    svg.appendChild(t);
+  });
+  const palette=['#1f6fc4','#0e8a63','#c47a10','#7a4fc4','#d13b3a','#5d8a2e','#1559a3'];
+  V.forEach((n,i)=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',19);
+    c.setAttribute('class','node-c');c.id='k-n'+n;c.setAttribute('fill','#9aa3b0');g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0,timer=null;
+  drawK();
+  const elStep=document.getElementById('k-step'),elCost=document.getElementById('k-cost'),
+    elCount=document.getElementById('k-count'),elList=document.getElementById('k-edgelist'),
+    elComp=document.getElementById('k-components'),elEx=document.getElementById('k-explain'),
+    btnNext=document.getElementById('k-next'),btnReset=document.getElementById('k-reset'),
+    btnPlay=document.getElementById('k-play'),speed=document.getElementById('k-speed');
+  /* palette per component representative */
+  const compColors={};
+  const palette=['#1f6fc4','#0e8a63','#c47a10','#7a4fc4','#d13b3a','#5d8a2e','#b02f2e'];
+
+  function render(){
+    const s=KRUSKAL[idx];
+    elStep.textContent='pas '+idx+' / '+(KRUSKAL.length-1);
+    elCost.textContent=s.cost;elCount.textContent=s.mst.length;
+    // edge list (sorted)
+    elList.innerHTML='';
+    SORTED.forEach(([a,b,w],i)=>{
+      const x=document.createElement('span');x.className='ec';x.textContent=a+'-'+b+'('+w+')';
+      const inMst=s.mst.some(([p,q])=>edgeKey(p,q)===edgeKey(a,b));
+      if(s.i===i && s.action) x.className+= s.action==='reject'?' rejected':' now';
+      else if(inMst) x.className+=' added';
+      else if(s.i>i && !inMst) x.className+=' rejected';
+      elList.appendChild(x);
+    });
+    // graph edges
+    const mstKeys=s.mst.map(([a,b])=>edgeKey(a,b));
+    EDGES.forEach(([a,b])=>{
+      const e=document.getElementById('k-e'+edgeKey(a,b));let cls='edge';
+      if(mstKeys.includes(edgeKey(a,b)))cls='edge mst';
+      else if(s.edge && edgeKey(s.edge[0],s.edge[1])===edgeKey(a,b)) cls= s.action==='reject'?'edge reject':'edge consider';
+      e.setAttribute('class',cls);
+    });
+    // nodes colored by component
+    s.comps.forEach((comp,ci)=>{
+      const col = comp.length>1?palette[ci%palette.length]:'#9aa3b0';
+      comp.forEach(n=>document.getElementById('k-n'+n).setAttribute('fill',col));
+    });
+    // components display
+    elComp.innerHTML='';
+    s.comps.sort((a,b)=>b.length-a.length).forEach((comp,ci)=>{
+      const x=document.createElement('span');x.className='comp';
+      x.textContent='{'+comp.join(',')+'}';
+      if(comp.length>1)x.style.borderColor=palette[ci%palette.length],x.style.color=palette[ci%palette.length];
+      elComp.appendChild(x);
+    });
+    elEx.innerHTML=s.msg;
+    elEx.className='explain'+(s.action==='reject'?' reject':'');
+    btnNext.disabled=idx>=KRUSKAL.length-1;
+  }
+  function next(){if(idx<KRUSKAL.length-1){idx++;render();}else stop();}
+  function reset(){stop();idx=0;render();}
+  function stop(){if(timer){clearInterval(timer);timer=null;btnPlay.innerHTML='<span>▶</span>Auto';}}
+  function play(){if(timer){stop();return;}if(idx>=KRUSKAL.length-1)idx=0;btnPlay.innerHTML='<span>⏸</span>Stop';
+    timer=setInterval(()=>{if(idx>=KRUSKAL.length-1){stop();}else{idx++;render();}},1600-speed.value+200);}
+  btnNext.onclick=()=>{stop();next();};btnReset.onclick=reset;btnPlay.onclick=play;
+  speed.oninput=()=>{if(timer){stop();play();}};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'În ce ordine analizează Kruskal muchiile?',
+   opts:['Aleator','Crescător după pondere','Descrescător după pondere','În ordinea vârfurilor'],correct:1,
+   why:'Kruskal sortează muchiile <b>crescător după pondere</b> și le ia de la cea mai ieftină la cea mai scumpă.'},
+  {q:'Când respinge Kruskal o muchie?',
+   opts:['Când e prea scumpă','Când cele două capete sunt deja în aceeași componentă','Când are pondere negativă','Niciodată'],correct:1,
+   why:'Dacă <code>find_set(u)==find_set(v)</code>, capetele sunt deja conectate → muchia ar crea un <b>ciclu</b> → o respinge.'},
+  {q:'La ce folosește structura union-find?',
+   opts:['La sortare','La a verifica rapid dacă două vârfuri sunt în aceeași componentă','La calculul ponderilor','La desenarea grafului'],correct:1,
+   why:'Union-find răspunde rapid la „sunt u și v în aceeași componentă?" (find_set) și unește componente (union) — exact ce trebuie pentru testul de ciclu.'},
+  {q:'Prim și Kruskal dau rezultate diferite?',
+   opts:['Da, mereu','Nu — ambele dau un MST cu același cost minim','Doar Prim e corect','Doar Kruskal e corect'],correct:1,
+   why:'Ambele găsesc un <b>arbore minim de acoperire cu același cost</b> (21 aici). Pot diferi muchiile doar dacă există mai multe MST-uri cu același cost.'},
+  {q:'Câte muchii respinge Kruskal pe graful subiectului 6?',
+   opts:['0','5','2','toate'],correct:1,
+   why:'Graful are 11 muchii, MST-ul are 6 → restul de <b>5</b> sunt respinse (ar crea cicluri): 3-5, 2-4, 5-7, 5-6, 6-7.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

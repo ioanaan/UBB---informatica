@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dijkstra — drumuri minime cu coadă de priorități</title>
+<style>
+    :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);
+    border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--blue-bg);color:#85B7EB}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:#85B7EB}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);
+    border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#D4537E}.codeblock .fn{color:#EF9F27}.codeblock .cm{color:#5F5E5A;font-style:italic}.codeblock .var{color:#5DCAA5}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:#EF9F27;min-width:80px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:#EF9F27}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:#b3d97a}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);
+    background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:330px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:1.8;fill:none}
+  .edge.tree{stroke:var(--amber);stroke-width:3}
+  .edge.active{stroke:var(--blue);stroke-width:3.5}
+  .ew{font-family:var(--mono);font-size:12px;font-weight:600;fill:#3a3833}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0;transition:fill .3s,stroke .3s}
+  .node-c.src{fill:var(--blue-d);stroke:var(--blue)}
+  .node-c.done{fill:var(--green-d);stroke:var(--green)}
+  .node-c.extract{fill:var(--amber-d);stroke:var(--amber);stroke-width:3}
+  .node-c.inacc{fill:#eceae3;stroke:#cfccc3;stroke-dasharray:3 3}
+  .node-lbl{fill:#ffffff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-d{font-size:11px;font-weight:700;text-anchor:middle;font-family:var(--mono);pointer-events:none;fill:#EF9F27}
+  .panel-state{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:720px){.panel-state{grid-template-columns:1fr}}
+  .ds{background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:64px}
+  .ds-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+  .ds-items{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:30px}
+  .chip{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:6px;background:var(--blue-bg);color:#85B7EB;border:0.5px solid var(--blue-d)}
+  .chip.done{background:var(--green-bg);color:#b3d97a;border-color:var(--green-d)}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:12px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:6px 8px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res td.hl{color:#85B7EB}
+  table.res td.upd{color:#b3d97a;font-weight:700}
+  table.res td.fin{background:var(--green-bg)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+  .cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  .cmp th,.cmp td{border:0.5px solid var(--line);padding:10px 14px;text-align:left}
+  .cmp th{background:var(--panel2);font-weight:600}
+  .cmp td:first-child{color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Dijkstra</h1>
+  <div class="sub">Drumuri minime de la o sursă · ponderi nenegative · coadă de priorități · subiectul 5</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ideea</a>
+  <a href="#vsbf">Dijkstra vs Bellman-Ford</a>
+  <a href="#greedy">Strategia greedy</a>
+  <a href="#cod">Cod</a>
+  <a href="#viz">Rulare pas cu pas</a>
+  <a href="#inacc">Vârfuri inaccesibile</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce face</h2>
+  <p class="lead">Dijkstra găsește drumul de cost minim de la o sursă la toate celelalte vârfuri, dar <b>doar dacă toate ponderile sunt ≥ 0</b>. E mai rapid decât Bellman-Ford fiindcă fixează definitiv câte un vârf la fiecare pas — nu reia toate arcele iar și iar.</p>
+  <div class="grid2">
+    <div class="card" style="border-color:var(--green-d)">
+      <h3 style="color:#b3d97a">Setul S</h3>
+      <p class="muted">Mulțimea vârfurilor pentru care drumul minim e <b>deja definitiv stabilit</b>. Începe gol, crește cu un vârf la fiecare iterație. Odată ce un vârf intră în S, distanța lui nu se mai schimbă.</p>
+    </div>
+    <div class="card" style="border-color:var(--blue-d)">
+      <h3 style="color:#85B7EB">Coada de priorități Q</h3>
+      <p class="muted">Conține vârfurile <b>încă nefinalizate</b> (V − S), ordonate după <code>d</code>. La fiecare pas extragi minimul (<code>EXTRACT-MIN</code>) — vârful cu cea mai mică estimare curentă.</p>
+    </div>
+  </div>
+</section>
+
+<section id="vsbf">
+  <h2>Dijkstra vs Bellman-Ford — când care</h2>
+  <table class="cmp">
+    <tr><th>Criteriu</th><th>Dijkstra</th><th>Bellman-Ford</th></tr>
+    <tr><td>Ponderi negative</td><td>❌ NU funcționează</td><td>✅ Da</td></tr>
+    <tr><td>Detectează cicluri negative</td><td>❌ Nu</td><td>✅ Da (return FALSE)</td></tr>
+    <tr><td>Viteză</td><td>✅ O((V+E)·log V) cu heap</td><td>O(V·E) — mai lent</td></tr>
+    <tr><td>Strategie</td><td>Greedy (extract-min)</td><td>Relaxare repetată a tuturor arcelor</td></tr>
+  </table>
+  <div class="note"><b>De ce Dijkstra nu merge cu ponderi negative:</b> odată ce fixezi un vârf în S, presupui că drumul lui e definitiv. Dar o pondere negativă apărută mai târziu ar putea oferi un drum mai ieftin — și Dijkstra n-ar mai reveni să-l corecteze. De-asta ai nevoie de Bellman-Ford acolo.</div>
+</section>
+
+<section id="greedy">
+  <h2>Strategia greedy — de ce funcționează</h2>
+  <p class="lead">Dijkstra face mereu alegerea „lacomă": <b>fixează vârful nefinalizat cu cea mai mică distanță estimată</b>. Pare riscant, dar e corect — dacă ponderile sunt nenegative.</p>
+  <div class="card">
+    <p><b>Argumentul:</b> când extragi vârful <code>u</code> cu cel mai mic <code>d[u]</code> dintre toate nefinalizate, nu mai există niciun drum mai scurt către u. Orice alt drum ar trece printr-un alt vârf nefinalizat <code>x</code>, dar <code>d[x] ≥ d[u]</code> (altfel l-ai fi extras pe x), iar de la x mai adaugi ponderi <b>≥ 0</b> → nu poți obține ceva mai mic decât <code>d[u]</code>.</p>
+    <p class="muted" style="margin-bottom:0">De-aceea, în momentul extragerii, <code>d[u]</code> e definitiv = <code>δ(s,u)</code>.</p>
+  </div>
+</section>
+
+<section id="cod">
+  <h2>Implementarea</h2>
+  <div class="codeblock"><span class="fn">DIJKSTRA</span>(G, w, s):
+  INIT(G, s)                       <span class="cm">// d[v]=∞, π[v]=NIL, d[s]=0</span>
+  S = ∅
+  Q = V                            <span class="cm">// toate vârfurile, ordonate după d</span>
+  <span class="kw">while</span> Q ≠ ∅:
+      u = EXTRACT_MIN(Q)           <span class="cm">// vârful nefinalizat cu d minim</span>
+      S = S ∪ {u}                  <span class="cm">// îl fixez definitiv</span>
+      <span class="kw">for</span> fiecare v ∈ Adj[u]:       <span class="cm">// relaxez arcele care pleacă din u</span>
+          RELAX(u, v, w)</div>
+  <p class="muted"><code>RELAX(u,v,w)</code>: <code>if d[v] > d[u]+w(u,v): d[v]=d[u]+w(u,v); π[v]=u</code> — exact ca la Bellman-Ford.</p>
+</section>
+
+<section id="viz">
+  <h2><span class="tag">Subiect 5</span> Rulare pas cu pas</h2>
+  <p class="lead">Graful tău, sursă = <code>c</code>. Fiecare pas = un <code>EXTRACT-MIN</code> + relaxarea vecinilor. Vârful <span style="color:#EF9F27">portocaliu</span> e cel extras acum; cele <span style="color:#b3d97a">verzi</span> sunt în S (finalizate). Urmărește un moment interesant la pasul 4: <code>f</code> scade de la 17 la 8.</p>
+  <div class="viz" id="dj-viz">
+    <div class="viz-top">
+      <span class="srclabel">Sursă: <b style="color:#85B7EB">c</b> &nbsp;·&nbsp; <span class="step-count" id="dj-step">pas 0</span></span>
+      <div class="controls">
+        <div class="speed" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)">viteză<input type="range" id="dj-speed" min="200" max="1400" value="700" step="50"></div>
+        <button class="ctl" id="dj-reset"><span>↺</span>Reset</button>
+        <button class="ctl" id="dj-play"><span>▶</span>Auto</button>
+        <button class="ctl primary" id="dj-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="dj-svg" viewBox="0 0 640 330"></svg>
+    <div class="panel-state">
+      <div class="ds"><div class="ds-lbl">Coadă Q (nefinalizate, după d)</div><div class="ds-items" id="dj-queue"></div></div>
+      <div class="ds"><div class="ds-lbl">Set S (finalizate definitiv)</div><div class="ds-items" id="dj-set"></div></div>
+    </div>
+    <div class="explain" id="dj-explain">Apasă „Pas →". c are d=0, intră primul în S.</div>
+    <table class="res" id="dj-table"></table>
+  </div>
+  <div class="note green">💡 La pasul 3, g relaxează f la 17 (3+14). Dar la pasul 4, d (cu d=7) relaxează f la 7+1=<b>8</b>, mai bine. Asta arată de ce Dijkstra procesează vârfurile în ordinea distanței: drumul real spre f trece prin d, descoperit ulterior.</div>
+</section>
+
+<section id="inacc">
+  <h2>Vârfurile inaccesibile — s și a</h2>
+  <p class="lead">Graful e <b>orientat</b>. Din sursa <code>c</code> nu există niciun drum înapoi spre <code>s</code> sau <code>a</code> (arcele spre ele vin doar din s, care nu e atins). Deci rămân la <code>d = ∞</code>.</p>
+  <div class="card">
+    <p style="margin-bottom:0">Ăsta NU e o greșeală — e răspunsul corect. La examen scrii pur și simplu <code>d[s] = ∞, d[a] = ∞</code> (sau „inaccesibile din c"). Dijkstra le lasă în coadă cu ∞ și nu le extrage niciodată (sau le extrage la final cu ∞ și nu relaxează nimic).</p>
+  </div>
+  <div class="card">
+    <h3>Răspunsul final (tabelul de examen)</h3>
+    <table class="res" style="font-size:13px">
+      <tr><th>v</th><th>s</th><th>a</th><th>b</th><th>c</th><th>d</th><th>e</th><th>f</th><th>g</th><th>t</th></tr>
+      <tr><td style="color:var(--muted)">d</td><td>∞</td><td>∞</td><td class="hl">9</td><td class="hl">0</td><td class="hl">7</td><td class="hl">1</td><td class="hl">8</td><td class="hl">3</td><td class="hl">13</td></tr>
+      <tr><td style="color:var(--muted)">π</td><td>–</td><td>–</td><td>d</td><td>–</td><td>c</td><td>c</td><td>d</td><td>e</td><td>g</td></tr>
+    </table>
+    <p class="muted" style="margin:10px 0 0">Ordinea extragerii din S: <code>c → e → g → d → f → b → t</code></p>
+  </div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Dijkstra · subiectul 5 · Algoritmica Grafurilor<br>
+  Ai acum BFS/DFS, Bellman-Ford și Dijkstra. Următorul logic: arbori (Prim/Kruskal, subiectul 6) sau flux.
+</footer>
+</div>
+
+<script>
+/* ===== SUBIECT 5 — arce date de user, sursă c ===== */
+const ARCS=[['s','a',4],['s','c',4],['a','b',8],['b','f',7],['b','g',4],
+  ['c','d',7],['c','e',1],['d','b',2],['d','e',6],['d','f',1],
+  ['e','g',2],['f','t',9],['g','f',14],['g','t',10]];
+const V=['s','a','b','c','d','e','f','g','t'];
+const POS={
+  s:[60,165], a:[175,75], b:[300,75], c:[175,255],
+  d:[300,255], e:[300,165], f:[450,140], g:[450,250], t:[580,165]
+};
+const adj={};V.forEach(v=>adj[v]=[]);
+ARCS.forEach(([u,v,w])=>adj[u].push([v,w]));
+
+/* build steps */
+function buildDijkstra(src){
+  const snaps=[];
+  const d={},pi={},done={};
+  V.forEach(v=>{d[v]=Infinity;pi[v]=null;done[v]=false;});
+  d[src]=0;
+  function qList(){return V.filter(v=>!done[v]&&d[v]<Infinity).sort((a,b)=>d[a]-d[b]);}
+  function sList(){return V.filter(v=>done[v]);}
+  snaps.push({d:{...d},pi:{...pi},done:{...done},extract:null,relaxed:[],
+    Q:qList(),S:sList(),msg:`Inițializare: d[${src}]=0, restul ∞. Q conține toate vârfurile accesibile.`});
+  while(true){
+    let u=null,best=Infinity;
+    for(const v of V) if(!done[v]&&d[v]<best){best=d[v];u=v;}
+    if(u===null) break;
+    done[u]=true;
+    const relaxed=[];
+    for(const[v,w]of adj[u]){
+      if(!done[v]&&d[u]+w<d[v]){const old=d[v];d[v]=d[u]+w;pi[v]=u;relaxed.push({v,old,nw:d[v],w});}
+    }
+    let msg=`<b>EXTRACT-MIN → ${u}</b> (d=${d[u]}), intră în S. `;
+    if(relaxed.length){
+      msg+='Relaxez: '+relaxed.map(r=>`${u}→${r.v} dă ${d[u]}+${r.w}=${r.nw}`+(r.old!==Infinity?` (era ${r.old}${r.nw<r.old?', mai bun!':''})`:'')).join('; ')+'.';
+    } else msg+='Niciun vecin nu se mai îmbunătățește.';
+    snaps.push({d:{...d},pi:{...pi},done:{...done},extract:u,relaxed:relaxed.map(r=>r.v),
+      Q:qList(),S:sList(),msg});
+  }
+  snaps.push({d:{...d},pi:{...pi},done:{...done},extract:null,relaxed:[],Q:[],S:sList(),final:true,
+    msg:`<b>Gata!</b> Q e goală. s și a au rămas la ∞ (inaccesibile din c — graf orientat). Tabelul final e răspunsul.`});
+  return snaps;
+}
+const DJ=buildDijkstra('c');
+
+function arcPath(a,b){
+  const[x1,y1]=POS[a],[x2,y2]=POS[b];
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);const r=22;
+  const sx=x1+dx/len*r,sy=y1+dy/len*r,ex=x2-dx/len*r,ey=y2-dy/len*r;
+  const mx=(sx+ex)/2,my=(sy+ey)/2;const off=20;
+  const px=-dy/len*off,py=dx/len*off;
+  return {d:`M${sx},${sy} Q${mx+px},${my+py} ${ex},${ey}`,lx:mx+px*1.5,ly:my+py*1.5};
+}
+function drawDJ(){
+  const svg=document.getElementById('dj-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  const defs=document.createElementNS(ns,'defs');
+  defs.innerHTML='<marker id="da" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b8b4ab" stroke-width="1.5"/></marker>'+
+    '<marker id="dab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#EF9F27" stroke-width="2"/></marker>';
+  svg.appendChild(defs);
+  ARCS.forEach(([a,b,w],i)=>{
+    const p=arcPath(a,b);
+    const path=document.createElementNS(ns,'path');
+    path.setAttribute('d',p.d);path.setAttribute('class','edge');path.setAttribute('marker-end','url(#da)');path.id='dj-e'+i;
+    svg.appendChild(path);
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',p.lx);t.setAttribute('y',p.ly);t.setAttribute('class','ew');t.setAttribute('text-anchor','middle');t.textContent=w;
+    svg.appendChild(t);
+  });
+  V.forEach(n=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',20);
+    c.setAttribute('class','node-c');c.id='dj-n'+n;g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+    const dl=document.createElementNS(ns,'text');dl.setAttribute('x',POS[n][0]);dl.setAttribute('y',POS[n][1]-28);
+    dl.setAttribute('class','node-d');dl.id='dj-d'+n;g.appendChild(dl);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0,timer=null;
+  drawDJ();
+  const elStep=document.getElementById('dj-step'),elQ=document.getElementById('dj-queue'),
+    elS=document.getElementById('dj-set'),elEx=document.getElementById('dj-explain'),
+    elTable=document.getElementById('dj-table'),btnNext=document.getElementById('dj-next'),
+    btnReset=document.getElementById('dj-reset'),btnPlay=document.getElementById('dj-play'),
+    speed=document.getElementById('dj-speed');
+  let prevD=null;
+
+  function render(){
+    const s=DJ[idx];
+    elStep.textContent='pas '+idx+' / '+(DJ.length-1);
+    V.forEach(n=>{
+      const c=document.getElementById('dj-n'+n);let cls='node-c';
+      if(s.extract===n) cls+=' extract';
+      else if(s.done[n]) cls+=' done';
+      else if(n==='c') cls+=' src';
+      else if(s.final && s.d[n]===Infinity) cls+=' inacc';
+      c.setAttribute('class',cls);
+      const dl=document.getElementById('dj-d'+n);dl.textContent=s.d[n]===Infinity?'∞':s.d[n];
+    });
+    ARCS.forEach(([a,b],i)=>{
+      const e=document.getElementById('dj-e'+i);let cls='edge',m='url(#da)';
+      if(s.extract===a && s.relaxed.includes(b)){cls='edge active';m='url(#dab)';}
+      else if(s.pi[b]===a && s.done[b]) cls='edge tree';
+      e.setAttribute('class',cls);e.setAttribute('marker-end',m);
+    });
+    elQ.innerHTML='';
+    if(s.Q.length) s.Q.forEach(n=>{const x=document.createElement('span');x.className='chip';x.textContent=n+'('+(s.d[n]===Infinity?'∞':s.d[n])+')';elQ.appendChild(x);});
+    else elQ.innerHTML='<span class="muted" style="font-size:12px">— goală —</span>';
+    elS.innerHTML='';
+    if(s.S.length) s.S.forEach(n=>{const x=document.createElement('span');x.className='chip done';x.textContent=n;elS.appendChild(x);});
+    else elS.innerHTML='<span class="muted" style="font-size:12px">— gol —</span>';
+    let html='<tr><th>v</th>';V.forEach(n=>html+='<th>'+n+(n==='c'?' (s)':'')+'</th>');html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">d</td>';
+    V.forEach(n=>{const val=s.d[n]===Infinity?'∞':s.d[n];const dropped=prevD&&s.d[n]<prevD[n];
+      const fin=s.done[n];html+='<td class="'+(dropped?'upd':'hl')+(fin?' fin':'')+'">'+val+'</td>';});
+    html+='</tr><tr><td style="color:var(--muted)">π</td>';V.forEach(n=>html+='<td>'+(s.pi[n]==null?'–':s.pi[n])+'</td>');html+='</tr>';
+    elTable.innerHTML=html;
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=DJ.length-1;
+  }
+  function next(){if(idx<DJ.length-1){prevD={...DJ[idx].d};idx++;render();}else stop();}
+  function reset(){stop();idx=0;prevD=null;render();}
+  function stop(){if(timer){clearInterval(timer);timer=null;btnPlay.innerHTML='<span>▶</span>Auto';}}
+  function play(){if(timer){stop();return;}if(idx>=DJ.length-1)idx=0;btnPlay.innerHTML='<span>⏸</span>Stop';
+    timer=setInterval(()=>{if(idx>=DJ.length-1){stop();}else{prevD={...DJ[idx].d};idx++;render();}},1600-speed.value+200);}
+  btnNext.onclick=()=>{stop();next();};btnReset.onclick=reset;btnPlay.onclick=play;
+  speed.oninput=()=>{if(timer){stop();play();}};
+  render();
+})();
+
+/* ===== QUIZ ===== */
+const QUIZ=[
+  {q:'Ce condiție trebuie să respecte ponderile pentru ca Dijkstra să fie corect?',
+   opts:['Să fie întregi','Să fie toate ≥ 0','Să fie distincte','Să fie ≤ 1'],correct:1,
+   why:'Dijkstra cere ponderi <b>nenegative</b>. Cu ponderi negative, un vârf fixat în S ar putea avea de fapt un drum mai scurt nedescoperit — și Dijkstra nu revine să-l corecteze.'},
+  {q:'Ce înseamnă că un vârf a intrat în setul S?',
+   opts:['A fost vizitat o dată','Distanța lui e definitivă (= δ)','E sursa','Are d=∞'],correct:1,
+   why:'Odată extras prin EXTRACT-MIN și pus în S, <b>d[u] e definitiv</b> egal cu costul minim real δ(s,u). Nu se mai schimbă.'},
+  {q:'În ce ordine extrage Dijkstra vârfurile?',
+   opts:['Alfabetic','În ordinea descoperirii','Crescător după distanța estimată d','Aleator'],correct:2,
+   why:'EXTRACT-MIN ia mereu vârful nefinalizat cu <b>cel mai mic d</b>. Pe graful tău: c→e→g→d→f→b→t.'},
+  {q:'De ce rămân s și a la ∞ pe graful subiectului 5?',
+   opts:['E o eroare','Sunt inaccesibile din c (graf orientat)','Au pondere negativă','Sunt sursa'],correct:1,
+   why:'Graful e orientat și din c nu există drum spre s sau a. Rămân la <b>∞</b> — răspuns corect, nu greșeală.'},
+  {q:'La pasul 3, f primește d=17 (prin g). De ce ajunge în final la 8?',
+   opts:['G are pondere negativă','d (extras la pasul 4) oferă un drum mai scurt: 7+1=8','E o eroare de rotunjire','f e sursa'],correct:1,
+   why:'Vârful d (d=7) e extras la pasul 4 și relaxează f: 7+1=<b>8</b> < 17. Drumul real spre f trece prin d, nu prin g.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

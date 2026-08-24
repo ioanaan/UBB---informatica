@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codarea Huffman — compresie optimă</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--teal);background:var(--teal-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:70px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.teal{background:var(--teal-bg);border-color:var(--teal-d)}
+  .note.teal b{color:var(--teal-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--teal);background:var(--teal-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--teal-d);border-color:var(--teal);color:#fff}
+  button.ctl.primary:hover{background:var(--teal)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:340px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .hedge{stroke:#b8b4ab;stroke-width:2;fill:none}
+  .bit{font-family:var(--mono);font-size:12px;font-weight:700;fill:var(--purple-d)}
+  .hnode{stroke:rgba(0,0,0,.2);stroke-width:1.5}
+  .hnode.leaf{fill:var(--amber-d)}
+  .hnode.inner{fill:var(--teal-d)}
+  .hnode.justmerged{stroke:var(--red);stroke-width:3}
+  .hlbl{fill:#fff;font-size:12px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--mono);pointer-events:none}
+  .queue{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;min-height:50px}
+  .qlbl{font-family:var(--mono);font-size:13px;color:var(--muted);margin-right:6px}
+  .qnode{font-family:var(--mono);font-size:13px;padding:8px 13px;border-radius:8px;border:0.5px solid var(--line);text-align:center;background:var(--panel2)}
+  .qnode.leaf{background:var(--amber-bg);color:var(--amber-d);border-color:var(--amber-d)}
+  .qnode.inner{background:var(--teal-bg);color:var(--teal-d);border-color:var(--teal-d)}
+  .qnode.picked{border-width:2px;border-color:var(--red);transform:scale(1.06)}
+  .explain{background:#f7f5ef;border-left:3px solid var(--teal);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.codes{border-collapse:collapse;font-family:var(--mono);font-size:14px;margin-top:14px;width:100%}
+  table.codes th,table.codes td{border:0.5px solid var(--line);padding:8px 12px;text-align:center}
+  table.codes th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.codes td.code{color:var(--purple-d);font-weight:700}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Codarea Huffman</h1>
+  <div class="sub">Cod prefix optim pentru compresie · seminar 3</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ce este</a>
+  <a href="#prefix">Cod prefix</a>
+  <a href="#cod">Algoritm</a>
+  <a href="#viz">Construire pas cu pas</a>
+  <a href="#coduri">Codurile + compresie</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce este și la ce folosește</h2>
+  <p class="lead">Huffman construiește un <b>cod binar optim</b> pentru compresie: caracterele frecvente primesc coduri scurte, cele rare coduri lungi. Rezultatul e cea mai scurtă reprezentare binară posibilă pentru un text dat.</p>
+  <div class="card">
+    <p style="margin-bottom:0">În loc să folosești 8 biți per caracter (ca ASCII), Huffman atribuie lungimi variabile după frecvență. Ex: în textul nostru <code>a</code> apare des → primește 1 bit; <code>f</code> apare rar → primește 4 biți. Per total, mesajul se scurtează mult.</p>
+  </div>
+</section>
+
+<section id="prefix">
+  <h2>Proprietatea de cod prefix</h2>
+  <p class="lead">Codurile Huffman au o proprietate esențială: <b>niciun cod nu e prefixul altuia</b>. Asta permite decodarea fără ambiguitate, fără separatori între caractere.</p>
+  <div class="note teal"><b>De ce contează:</b> dacă <code>a=0</code> și <code>b=01</code>, când citești „0" nu știi dacă e a sau începutul lui b. Codul prefix elimină asta — caracterele sunt mereu în <b>frunzele</b> arborelui, niciodată pe drum spre alt caracter.</div>
+</section>
+
+<section id="cod">
+  <h2>Algoritmul</h2>
+  <p class="lead">Greedy: combini repetat cele <b>două noduri cu frecvența minimă</b> într-un nod nou, până rămâne unul singur (rădăcina).</p>
+  <div class="codeblock"><span class="fn">HUFFMAN</span>(C):
+  n = |C|
+  Q = C                          <span class="cm">// coadă de priorități după frecvență</span>
+  <span class="kw">for</span> i = 1 <span class="kw">to</span> n−1:
+      aloc un nou vârf z
+      z.stâng = x = EXTRACT_MIN(Q)   <span class="cm">// cel mai mic</span>
+      z.drept = y = EXTRACT_MIN(Q)   <span class="cm">// al doilea cel mai mic</span>
+      z.fr = x.fr + y.fr             <span class="cm">// frecvența combinată</span>
+      INSERT(Q, z)                   <span class="cm">// reintroduc nodul nou</span>
+  <span class="kw">return</span> EXTRACT_MIN(Q)         <span class="cm">// rădăcina arborelui</span></div>
+  <div class="card">
+    <div class="keyrow"><span class="k">stânga = 0</span><span>muchia spre fiul stâng primește bitul 0</span></div>
+    <div class="keyrow"><span class="k">dreapta = 1</span><span>muchia spre fiul drept primește bitul 1</span></div>
+    <div class="keyrow"><span class="k">cod</span><span>citești biții de la rădăcină până la frunza caracterului</span></div>
+  </div>
+</section>
+
+<section id="viz">
+  <h2>Construire pas cu pas — exemplul din seminar</h2>
+  <p class="lead">Frecvențe: a:45, b:13, c:12, d:16, e:9, f:5. La fiecare pas se extrag cele două noduri minime (<span style="color:var(--red-d)">evidențiate</span>) și se unesc într-un nod nou. Coada de jos arată nodurile rămase, sortate.</p>
+  <div class="viz" id="h-viz">
+    <div class="viz-top">
+      <span class="srclabel"><span class="step-count" id="h-step"></span></span>
+      <div class="controls">
+        <button class="ctl" id="h-reset"><span>↺</span>Reset</button>
+        <button class="ctl primary" id="h-next">Unește următoarele →</button>
+      </div>
+    </div>
+    <div class="queue" id="h-queue"></div>
+    <svg class="graph" id="h-svg" viewBox="0 0 600 340"></svg>
+    <div class="explain" id="h-explain">Apasă „Unește". Se extrag cele două noduri cu frecvența minimă.</div>
+  </div>
+  <div class="note green">💡 Mereu se aleg cele <b>două minime</b>. Aici: întâi f(5)+e(9)=14, apoi c(12)+b(13)=25, apoi 14+d(16)=30, apoi 25+30=55, în final a(45)+55=100 (rădăcina).</div>
+</section>
+
+<section id="coduri">
+  <h2>Codurile rezultate și compresia</h2>
+  <table class="codes">
+    <tr><th>caracter</th><th>frecvență</th><th>cod Huffman</th><th>lungime</th></tr>
+    <tr><td>a</td><td>45</td><td class="code">0</td><td>1 bit</td></tr>
+    <tr><td>b</td><td>13</td><td class="code">101</td><td>3 biți</td></tr>
+    <tr><td>c</td><td>12</td><td class="code">100</td><td>3 biți</td></tr>
+    <tr><td>d</td><td>16</td><td class="code">111</td><td>3 biți</td></tr>
+    <tr><td>e</td><td>9</td><td class="code">1101</td><td>4 biți</td></tr>
+    <tr><td>f</td><td>5</td><td class="code">1100</td><td>4 biți</td></tr>
+  </table>
+  <div class="card">
+    <h3>Compresia mesajului <code>aaaaabbbbcccddef</code></h3>
+    <p style="margin-bottom:8px">Codat Huffman: <code>0000010110110110110010010011111111011100</code></p>
+    <div class="keyrow"><span class="k" style="min-width:130px">ASCII (8 biți/car)</span><span>16 caractere × 8 = <b>128 biți</b></span></div>
+    <div class="keyrow"><span class="k" style="min-width:130px">Huffman</span><span>doar <b style="color:var(--green-d)">40 biți</b> — compresie de ~69%</span></div>
+    <p class="muted" style="margin:8px 0 0">Observă proprietatea prefix: poți decoda <code>0000010110...</code> fără ambiguitate — fiecare secvență duce unic la o frunză.</p>
+  </div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Codarea Huffman · seminar 3 · cod prefix optim<br>
+  Prüfer și Cayley sunt în pagini separate.
+</footer>
+</div>
+
+<script>
+const FREQ={a:45,b:13,c:12,d:16,e:9,f:5};
+let uid=0;
+function leaf(ch,fr){return {id:uid++,ch,fr,l:null,r:null};}
+
+/* build merge steps */
+function buildHuffman(){
+  const steps=[];
+  let Q=Object.entries(FREQ).map(([ch,fr])=>leaf(ch,fr));
+  function sortQ(){Q.sort((x,y)=>x.fr-y.fr || (x.ch||'~~').localeCompare(y.ch||'~~'));}
+  sortQ();
+  steps.push({queue:Q.map(cloneShallow),merged:null,picked:[],msg:'Coada inițială, sortată crescător după frecvență.'});
+  while(Q.length>1){
+    sortQ();
+    const x=Q.shift(), y=Q.shift();
+    const z={id:uid++,ch:null,fr:x.fr+y.fr,l:x,r:y};
+    Q.push(z);sortQ();
+    steps.push({queue:Q.map(cloneShallow),merged:z.id,picked:[x.fr+'/'+(x.ch||'·'),y.fr+'/'+(y.ch||'·')],
+      tree:cloneTree(z),
+      msg:`Extrag cele 2 minime: <b>${x.ch||'('+x.fr+')'}</b>(${x.fr}) și <b>${y.ch||'('+y.fr+')'}</b>(${y.fr}). Le unesc → nod nou cu frecvența <b>${z.fr}</b>.`});
+  }
+  steps[steps.length-1].final=true;
+  steps[steps.length-1].root=Q[0];
+  steps[steps.length-1].msg='<b>Gata!</b> A rămas un singur nod = rădăcina (frecvență 100). Arborele Huffman e complet.';
+  return steps;
+}
+function cloneShallow(n){return {id:n.id,ch:n.ch,fr:n.fr,hasChildren:!!(n.l||n.r)};}
+function cloneTree(n){if(!n)return null;return {id:n.id,ch:n.ch,fr:n.fr,l:cloneTree(n.l),r:cloneTree(n.r)};}
+const HSTEPS=buildHuffman();
+/* full final tree for drawing growth */
+const FULLROOT=HSTEPS[HSTEPS.length-1].root;
+
+/* assign positions by walking final tree (so partial trees use same coords) */
+const NODEPOS={};
+(function layout(){
+  // depth-based layout
+  let leafX=0;
+  const leafGap=85;
+  function place(n,depth){
+    if(!n)return;
+    if(!n.l&&!n.r){NODEPOS[n.id]={x:40+leafX*leafGap,y:300};leafX++;return;}
+    place(n.l,depth+1);place(n.r,depth+1);
+    const lx=NODEPOS[n.l.id].x, rx=NODEPOS[n.r.id].x;
+    NODEPOS[n.id]={x:(lx+rx)/2,y:300-depth*65};
+  }
+  // compute max depth first for y-orientation
+  function maxDepth(n){if(!n)return 0;if(!n.l&&!n.r)return 0;return 1+Math.max(maxDepth(n.l),maxDepth(n.r));}
+  const md=maxDepth(FULLROOT);
+  function place2(n,depth){
+    if(!n)return;
+    if(!n.l&&!n.r){NODEPOS[n.id]={x:40+leafX*leafGap,y:60+md*60};leafX++;return;}
+    place2(n.l,depth+1);place2(n.r,depth+1);
+    const lx=NODEPOS[n.l.id].x,rx=NODEPOS[n.r.id].x;
+    NODEPOS[n.id]={x:(lx+rx)/2,y:60+(md-1-relDepth(n))*60};
+  }
+  function relDepth(n){if(!n||(!n.l&&!n.r))return 0;return 1+Math.max(relDepth(n.l),relDepth(n.r));}
+  leafX=0;
+  // simpler: y by height from bottom
+  function h(n){if(!n||(!n.l&&!n.r))return 0;return 1+Math.max(h(n.l),h(n.r));}
+  function place3(n){
+    if(!n)return;
+    if(!n.l&&!n.r){NODEPOS[n.id]={x:40+leafX*leafGap,y:300};leafX++;return;}
+    place3(n.l);place3(n.r);
+    const lx=NODEPOS[n.l.id].x,rx=NODEPOS[n.r.id].x;
+    NODEPOS[n.id]={x:(lx+rx)/2,y:300-h(n)*62};
+  }
+  leafX=0;place3(FULLROOT);
+})();
+
+function drawTreeSnapshot(tree,mergedId){
+  const svg=document.getElementById('h-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  if(!tree)return;
+  // collect nodes/edges in this partial tree
+  const edges=[],nodes=[];
+  (function walk(n,parentBit){
+    nodes.push(n);
+    if(n.l){edges.push([n,n.l,'0']);walk(n.l);}
+    if(n.r){edges.push([n,n.r,'1']);walk(n.r);}
+  })(tree);
+  edges.forEach(([p,c,bit])=>{
+    const pp=NODEPOS[p.id],cp=NODEPOS[c.id];if(!pp||!cp)return;
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',pp.x);l.setAttribute('y1',pp.y);l.setAttribute('x2',cp.x);l.setAttribute('y2',cp.y);
+    l.setAttribute('class','hedge');svg.appendChild(l);
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',(pp.x+cp.x)/2 + (bit==='0'?-9:9));t.setAttribute('y',(pp.y+cp.y)/2);
+    t.setAttribute('class','bit');t.textContent=bit;svg.appendChild(t);
+  });
+  nodes.forEach(n=>{
+    const p=NODEPOS[n.id];if(!p)return;
+    const isLeaf=!n.l&&!n.r;
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',isLeaf?18:16);
+    c.setAttribute('class','hnode '+(isLeaf?'leaf':'inner')+(n.id===mergedId?' justmerged':''));svg.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',p.x);t.setAttribute('y',p.y);
+    t.setAttribute('class','hlbl');t.textContent=isLeaf?(n.ch+':'+n.fr):n.fr;svg.appendChild(t);
+  });
+}
+
+(function(){
+  let idx=0;
+  const elStep=document.getElementById('h-step'),elQ=document.getElementById('h-queue'),
+    elEx=document.getElementById('h-explain'),btnNext=document.getElementById('h-next'),
+    btnReset=document.getElementById('h-reset');
+  function render(){
+    const s=HSTEPS[idx];
+    elStep.textContent='pas '+idx+' / '+(HSTEPS.length-1);
+    // queue
+    elQ.innerHTML='<span class="qlbl">Coadă Q:</span>';
+    s.queue.forEach(n=>{
+      const x=document.createElement('span');
+      x.className='qnode '+(n.hasChildren?'inner':'leaf');
+      x.textContent=n.ch?(n.ch+':'+n.fr):('('+n.fr+')');
+      elQ.appendChild(x);
+    });
+    drawTreeSnapshot(s.tree||(s.final?FULLROOT:null), s.merged);
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=HSTEPS.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<HSTEPS.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Ce construiește algoritmul Huffman?',
+   opts:['Arbore minim de acoperire','Cod prefix optim pentru compresie','Drum minim','Flux maxim'],correct:1,
+   why:'Huffman dă un <b>cod prefix optim</b>: caractere frecvente → coduri scurte, rare → lungi. Minimizează lungimea totală a mesajului.'},
+  {q:'La fiecare pas, ce noduri combină Huffman?',
+   opts:['Cele două cu frecvența maximă','Cele două cu frecvența minimă','Primul și ultimul','Aleator'],correct:1,
+   why:'Greedy: combină mereu <b>cele două noduri cu frecvența minimă</b> din coadă într-un nod nou cu suma frecvențelor.'},
+  {q:'Ce înseamnă „cod prefix"?',
+   opts:['Toate codurile au aceeași lungime','Niciun cod nu e prefixul altuia','Codurile încep cu 0','Codurile sunt sortate'],correct:1,
+   why:'<b>Niciun cod nu e prefixul altuia</b> → decodare fără ambiguitate. Caracterele stau doar în frunze, niciodată pe drum spre alt caracter.'},
+  {q:'De ce primește „a" codul cel mai scurt (1 bit)?',
+   opts:['E prima literă','Are frecvența cea mai mare (45)','E vocală','Aleator'],correct:1,
+   why:'<b>a</b> are frecvența maximă (45), deci e combinat ultimul → ajunge cel mai aproape de rădăcină → cod scurt (1 bit).'},
+  {q:'Mesajul de 16 caractere ocupă 40 biți Huffman vs 128 ASCII. Ce arată asta?',
+   opts:['Huffman e mai lent','Compresie ~69% — economie mare de spațiu','Eroare','ASCII e mai bun'],correct:1,
+   why:'40 vs 128 biți = <b>compresie de ~69%</b>. Exact scopul lui Huffman: reprezentare mult mai scurtă a aceleiași informații.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

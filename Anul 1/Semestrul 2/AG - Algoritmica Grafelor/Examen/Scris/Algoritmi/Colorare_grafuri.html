@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colorarea grafurilor</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --c1:#e05a4d; --c2:#3d8bd4; --c3:#5aa832; --c4:#e0a020; --c5:#9a5bc7;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:44px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;letter-spacing:-.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:800px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:90px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}.note.green b{color:var(--green-d)}
+  .note.blue{background:var(--blue-bg);border-color:var(--blue-d)}.note.blue b{color:var(--blue-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  svg.graph{width:100%;height:300px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2}
+  .node-c{stroke:rgba(0,0,0,.25);stroke-width:1.5;fill:#c9c6bd;transition:fill .4s}
+  .node-c.curr{stroke:#1f2128;stroke-width:3}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:44px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  .palette{display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap}
+  .swatch{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+  .sw{width:16px;height:16px;border-radius:4px;border:0.5px solid rgba(0,0,0,.15)}
+  table.cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  table.cmp th,table.cmp td{border:0.5px solid var(--line);padding:9px 12px;text-align:left}
+  table.cmp th{background:var(--panel2);font-weight:600}
+  table.cmp td:first-child{color:var(--muted);font-weight:600}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Colorarea grafurilor</h1>
+  <div class="sub">Număr cromatic · colorare greedy · polinom cromatic · colorarea muchiilor · seminar 6</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ideea</a>
+  <a href="#cromatic">Număr cromatic</a>
+  <a href="#greedy">Colorare greedy</a>
+  <a href="#polinom">Polinom cromatic</a>
+  <a href="#muchii">Colorarea muchiilor</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce înseamnă „a colora un graf"</h2>
+  <p class="lead">A colora vârfurile unui graf înseamnă a atribui fiecărui vârf o culoare, astfel încât <b>oricare două vârfuri legate printr-o muchie să aibă culori diferite</b>. Întrebarea centrală: câte culori sunt minim necesare?</p>
+  <div class="note blue">Aplicații reale: programarea examenelor (două examene cu studenți comuni nu pot fi în același slot → culori diferite), alocarea frecvențelor radio, colorarea hărților (țări vecine, culori diferite).</div>
+</section>
+
+<section id="cromatic">
+  <h2>Numărul cromatic χ(G)</h2>
+  <p class="lead"><b>Numărul cromatic</b> χ(G) = numărul <b>minim</b> de culori cu care poți colora graful respectând regula. E o măsură a „cât de încâlcit" e graful.</p>
+  <div class="card">
+    <div class="keyrow"><span class="k" style="min-width:110px">χ(G) = 1</span><span>graf fără muchii (vârfuri izolate)</span></div>
+    <div class="keyrow"><span class="k" style="min-width:110px">χ(G) = 2</span><span>graf <b>bipartit</b> (fără cicluri impare) — ex: arbori, cicluri pare</span></div>
+    <div class="keyrow"><span class="k" style="min-width:110px">χ(Kₙ) = n</span><span>graf complet — fiecare vârf e legat de toți, deci fiecare are nevoie de culoare proprie</span></div>
+    <div class="keyrow"><span class="k" style="min-width:110px">χ(ciclu impar) = 3</span><span>C₃, C₅, C₇... nu pot fi colorate cu 2</span></div>
+  </div>
+  <div class="card">
+    <h3>Margini utile</h3>
+    <div class="keyrow"><span class="k" style="min-width:130px">χ(G) ≤ Δ(G)+1</span><span>Δ = gradul maxim. Greedy garantează cel mult atâtea culori.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:130px">χ(G) ≥ ω(G)</span><span>ω = mărimea celei mai mari clici (subgraf complet). O clică de k vârfuri forțează k culori.</span></div>
+  </div>
+  <div class="note green">💡 <b>La examen:</b> pentru a arăta că χ(G)=k, faci două lucruri: (1) găsești o colorare cu k culori (arată că k e suficient), (2) găsești o clică de k vârfuri sau alt argument că k−1 nu ajunge.</div>
+</section>
+
+<section id="greedy">
+  <h2>Colorarea greedy (secvențială)</h2>
+  <p class="lead">Cea mai simplă metodă: parcurgi vârfurile într-o ordine și dai fiecăruia <b>prima culoare disponibilă</b> (care nu apare la vecinii deja colorați).</p>
+  <div class="codeblock"><span class="fn">GREEDY_COLORING</span>(G, ordine):
+  <span class="kw">for</span> fiecare vârf v în ordine:
+      culori_vecini = {culorile vecinilor deja colorați ai lui v}
+      v.culoare = cea mai mică culoare care NU e în culori_vecini</div>
+  <div class="viz" id="g-viz">
+    <div class="viz-top">
+      <span class="step-count" id="g-step"></span>
+      <div class="controls">
+        <button class="ctl" id="g-reset">↺ Reset</button>
+        <button class="ctl primary" id="g-next">Colorează următorul →</button>
+      </div>
+    </div>
+    <svg class="graph" id="g-svg" viewBox="0 0 500 300"></svg>
+    <div class="palette">
+      <span class="muted" style="font-size:12px">Culori:</span>
+      <span class="swatch"><span class="sw" style="background:var(--c1)"></span>1</span>
+      <span class="swatch"><span class="sw" style="background:var(--c2)"></span>2</span>
+      <span class="swatch"><span class="sw" style="background:var(--c3)"></span>3</span>
+      <span class="swatch"><span class="sw" style="background:var(--c4)"></span>4</span>
+    </div>
+    <div class="explain" id="g-explain">Apasă „Colorează următorul". Vârfurile se colorează pe rând, fiecare cu prima culoare liberă.</div>
+  </div>
+  <div class="note"><b>Atenție:</b> greedy NU garantează numărul cromatic optim — rezultatul depinde de ordine! O ordine proastă poate folosi mai multe culori decât e necesar. Dar dă mereu o colorare validă cu ≤ Δ+1 culori.</div>
+</section>
+
+<section id="polinom">
+  <h2>Polinomul cromatic P(G, k)</h2>
+  <p class="lead"><b>Polinomul cromatic</b> P(G,k) numără <b>în câte moduri</b> poți colora graful cu k culori. E un polinom în k — și primul k pentru care P(G,k) &gt; 0 este chiar numărul cromatic.</p>
+  <div class="card">
+    <h3>Cazuri de bază</h3>
+    <div class="keyrow"><span class="k" style="min-width:80px">n vârfuri izolate</span><span>P = kⁿ (fiecare vârf, orice culoare)</span></div>
+    <div class="keyrow"><span class="k" style="min-width:80px">Kₙ (complet)</span><span>P = k(k−1)(k−2)...(k−n+1)</span></div>
+    <div class="keyrow"><span class="k" style="min-width:80px">arbore, n vârfuri</span><span>P = k(k−1)ⁿ⁻¹</span></div>
+  </div>
+  <div class="card">
+    <h3>Metoda descompunerii (ștergere-contracție)</h3>
+    <p style="margin-bottom:8px">Pentru grafuri mai complexe, folosești recurența cu o muchie e:</p>
+    <div class="codeblock">P(G, k) = P(G−e, k) − P(G/e, k)</div>
+    <div class="keyrow"><span class="k" style="min-width:60px">G−e</span><span>graful cu muchia e <b>ștearsă</b></span></div>
+    <div class="keyrow"><span class="k" style="min-width:60px">G/e</span><span>graful cu muchia e <b>contractată</b> (cele două capete unite într-un vârf)</span></div>
+    <p class="muted" style="margin:8px 0 0">Repeți până ajungi la grafuri simple (fără muchii, complete, sau arbori) ale căror polinoame le știi.</p>
+  </div>
+  <div class="note green">💡 <b>Exemplul din seminar</b> dă <code>P(G,k) = k⁵ − 7k⁴ + 18k³ − 20k² + 8k</code>. Verifici: P(1)=0, P(2)=0, <b>P(3)=6</b> → primul k cu P&gt;0 e 3, deci numărul cromatic e <b>3</b>, și există 6 colorări distincte cu 3 culori.</div>
+  <div class="note"><b>Proprietăți de verificare:</b> gradul polinomului = n (nr vârfuri); coeficientul lui kⁿ e mereu 1; coeficientul lui kⁿ⁻¹ e −(nr muchii); termenii alternează semnul; nu are termen liber (P(0)=0).</div>
+</section>
+
+<section id="muchii">
+  <h2>Colorarea muchiilor</h2>
+  <p class="lead">Variantă: colorezi <b>muchiile</b> în loc de vârfuri, astfel încât <b>două muchii care se ating (au un vârf comun) să aibă culori diferite</b>. Numărul minim = <b>indicele cromatic</b> χ'(G).</p>
+  <div class="card">
+    <div class="keyrow"><span class="k" style="min-width:110px">χ'(G) ≥ Δ(G)</span><span>toate muchiile dintr-un vârf de grad Δ trebuie să aibă culori diferite.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:110px">Teorema Vizing</span><span>pentru orice graf simplu: <b>χ'(G) = Δ sau Δ+1</b>. Doar două valori posibile!</span></div>
+  </div>
+  <div class="note green">💡 <b>Tip de subiect (seminar, problema 9):</b> „desenați un graf 3-regular cu indice cromatic de muchii ≥ 4". Un graf 3-regular are Δ=3, deci χ' e 3 sau 4 (Vizing). Ca să forțezi 4, folosești un graf care nu se poate colora cu 3 (ex: graful Petersen, sau unul cu o structură care blochează).</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Colorarea grafurilor · seminar 6<br>
+  Număr cromatic · greedy · polinom cromatic · colorarea muchiilor
+</footer>
+</div>
+
+<script>
+const COLORS=['#c9c6bd','#e05a4d','#3d8bd4','#5aa832','#e0a020','#9a5bc7'];
+/* graf pentru greedy: 5 vârfuri, C5 (ciclu impar → 3 culori) */
+const NODES=[1,2,3,4,5];
+const GEDGES=[[1,2],[2,3],[3,4],[4,5],[5,1],[1,3]]; /* C5 + coardă */
+const GPOS={1:[250,50],2:[400,150],3:[340,270],4:[160,270],5:[100,150]};
+const GADJ={};NODES.forEach(v=>GADJ[v]=[]);
+GEDGES.forEach(([a,b])=>{GADJ[a].push(b);GADJ[b].push(a);});
+
+function buildGreedy(){
+  const steps=[];
+  const color={};
+  steps.push({color:{},curr:null,msg:'Pornesc. Niciun vârf colorat încă. Ordinea: 1,2,3,4,5.'});
+  for(const v of NODES){
+    const used=new Set(GADJ[v].map(u=>color[u]).filter(c=>c));
+    let c=1;while(used.has(c))c++;
+    color[v]=c;
+    const usedList=[...used].sort();
+    steps.push({color:{...color},curr:v,
+      msg:`Vârful <b>${v}</b>: vecinii colorați folosesc culorile {${usedList.join(', ')||'niciuna'}}. Prima liberă e <b>${c}</b>.`});
+  }
+  const nc=Math.max(...Object.values(color));
+  steps.push({color:{...color},curr:null,final:true,
+    msg:`<b>Gata!</b> Colorare cu <b>${nc} culori</b>. (Acest graf are ciclu impar + coardă → chiar are nevoie de 3.)`});
+  return steps;
+}
+const GREEDY=buildGreedy();
+
+function drawGreedy(){
+  const svg=document.getElementById('g-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  GEDGES.forEach(([a,b])=>{
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',GPOS[a][0]);l.setAttribute('y1',GPOS[a][1]);
+    l.setAttribute('x2',GPOS[b][0]);l.setAttribute('y2',GPOS[b][1]);
+    l.setAttribute('class','edge');svg.appendChild(l);
+  });
+  NODES.forEach(n=>{
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',GPOS[n][0]);c.setAttribute('cy',GPOS[n][1]);c.setAttribute('r',22);
+    c.setAttribute('class','node-c');c.id='g-n'+n;svg.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',GPOS[n][0]);t.setAttribute('y',GPOS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;svg.appendChild(t);
+  });
+}
+
+(function(){
+  let idx=0;
+  drawGreedy();
+  const elStep=document.getElementById('g-step'),elEx=document.getElementById('g-explain'),
+    btnNext=document.getElementById('g-next'),btnReset=document.getElementById('g-reset');
+  function render(){
+    const s=GREEDY[idx];
+    elStep.textContent='pas '+idx+' / '+(GREEDY.length-1);
+    NODES.forEach(n=>{
+      const c=document.getElementById('g-n'+n);
+      const col=s.color[n]||0;
+      c.setAttribute('fill',COLORS[col]);
+      c.setAttribute('class','node-c'+(s.curr===n?' curr':''));
+    });
+    elEx.innerHTML=s.msg;
+    btnNext.disabled=idx>=GREEDY.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<GREEDY.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Ce este numărul cromatic χ(G)?',
+   opts:['Numărul de vârfuri','Numărul minim de culori pentru a colora vârfurile','Numărul de muchii','Gradul maxim'],correct:1,
+   why:'χ(G) = <b>numărul minim de culori</b> astfel încât vârfurile adiacente să aibă culori diferite.'},
+  {q:'Cât este χ(Kₙ) (graful complet)?',
+   opts:['2','n','n−1','1'],correct:1,
+   why:'În Kₙ fiecare vârf e legat de toate celelalte → fiecare are nevoie de culoare proprie → <b>χ(Kₙ) = n</b>.'},
+  {q:'Ce garantează colorarea greedy?',
+   opts:['Numărul cromatic optim','O colorare validă cu ≤ Δ+1 culori','Exact 2 culori','Cel mai rapid algoritm'],correct:1,
+   why:'Greedy dă mereu o colorare validă cu cel mult <b>Δ+1 culori</b>, dar NU neapărat optimă — depinde de ordine.'},
+  {q:'Ce numără polinomul cromatic P(G,k)?',
+   opts:['Numărul de vârfuri','În câte moduri se colorează G cu k culori','Numărul de muchii','Gradul'],correct:1,
+   why:'P(G,k) = <b>numărul de colorări valide</b> cu k culori. Primul k cu P(G,k)&gt;0 e numărul cromatic.'},
+  {q:'Conform teoremei Vizing, χ\'(G) (indicele cromatic) poate fi:',
+   opts:['Orice valoare','Doar Δ sau Δ+1','Mereu n','Mereu 2'],correct:1,
+   why:'Teorema Vizing: pentru orice graf simplu, colorarea muchiilor necesită <b>exact Δ sau Δ+1 culori</b> — doar două opțiuni.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

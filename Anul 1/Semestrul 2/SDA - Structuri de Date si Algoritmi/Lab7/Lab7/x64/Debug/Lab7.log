@@ -1,0 +1,8 @@
+﻿  IteratorMDO.cpp
+  MDO.cpp
+  TestExtins.cpp
+  TestScurt.cpp
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\SDA\Lab7\TestExtins.cpp(117,8): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\SDA\Lab7\TestExtins.cpp(135,8): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Generating Code...
+  Lab7.vcxproj -> C:\Users\nicut\Desktop\UBB\Anul 1\Semester 2\SDA\Lab7\x64\Debug\Lab7.exe

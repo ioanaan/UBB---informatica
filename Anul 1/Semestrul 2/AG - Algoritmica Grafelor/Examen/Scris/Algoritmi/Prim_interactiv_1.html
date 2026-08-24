@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmul lui Prim — arbore minim de acoperire</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--blue-bg);color:var(--blue-d)}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}.codeblock .var{color:var(--teal-d)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:70px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}
+  .note.green b{color:var(--green-d)}
+  .note.blue{background:var(--blue-bg);border-color:var(--blue-d)}
+  .note.blue b{color:var(--blue-d)}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:330px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2;fill:none}
+  .edge.mst{stroke:var(--green);stroke-width:4}
+  .edge.cand{stroke:var(--blue);stroke-width:3;stroke-dasharray:5 4}
+  .ew{font-family:var(--mono);font-size:13px;font-weight:700;fill:#3a3833}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0;transition:fill .3s}
+  .node-c.src{fill:var(--blue-d);stroke:var(--blue)}
+  .node-c.inmst{fill:var(--green-d);stroke:var(--green)}
+  .node-c.extract{fill:var(--amber-d);stroke:var(--amber);stroke-width:3}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-k{font-size:11px;font-weight:700;text-anchor:middle;font-family:var(--mono);pointer-events:none;fill:var(--amber-d)}
+  .panel-state{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:720px){.panel-state{grid-template-columns:1fr}}
+  .ds{background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:12px 14px;min-height:60px}
+  .ds-lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+  .ds-items{display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-height:28px}
+  .chip{font-family:var(--mono);font-size:13px;padding:4px 10px;border-radius:6px;background:var(--green-bg);color:var(--green-d);border:0.5px solid var(--green-d)}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:13px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:6px 9px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res td.hl{color:var(--blue-d)}
+  table.res td.upd{background:var(--green-bg);color:var(--green-d);font-weight:700}
+  .speed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  input[type=range]{width:90px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+  .cmp{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px}
+  .cmp th,.cmp td{border:0.5px solid var(--line);padding:10px 14px;text-align:left}
+  .cmp th{background:var(--panel2);font-weight:600}
+  .cmp td:first-child{color:var(--muted);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Algoritmul lui Prim</h1>
+  <div class="sub">Arbore minim de acoperire (MST) · crește un singur arbore din rădăcină · subiectul 6</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ce este MST</a>
+  <a href="#prim">Strategia Prim</a>
+  <a href="#comp">Componente</a>
+  <a href="#cod">Cod</a>
+  <a href="#viz">Prim pas cu pas</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce este un arbore minim de acoperire</h2>
+  <p class="lead">Un <b>arbore minim de acoperire</b> (MST) al unui graf neorientat ponderat este un subset de muchii care: (1) leagă <b>toate</b> vârfurile, (2) nu formează cicluri (e arbore), (3) are <b>costul total minim</b> posibil.</p>
+  <div class="card">
+    <div class="keyrow"><span class="k">acoperire</span><span>conține toate cele <code>n</code> vârfuri ale grafului</span></div>
+    <div class="keyrow"><span class="k">arbore</span><span>exact <code>n−1</code> muchii, fără cicluri, conex</span></div>
+    <div class="keyrow"><span class="k">minim</span><span>suma ponderilor muchiilor e cât mai mică</span></div>
+  </div>
+  <div class="note blue">Două algoritmi clasici dau MST-ul: <b>Prim</b> (crește un singur arbore din rădăcină) și <b>Kruskal</b> (adaugă muchii sortate, unind păduri). Ambele dau același cost minim.</div>
+</section>
+
+<section id="prim">
+  <h2>Strategia lui Prim</h2>
+  <p class="lead">Prim seamănă izbitor cu Dijkstra. Pornește dintr-o rădăcină și <b>crește un singur arbore</b>, adăugând la fiecare pas <b>cea mai ieftină muchie</b> care leagă arborele de un vârf nou (din afară).</p>
+  <div class="card">
+    <p style="margin-bottom:8px"><b>La fiecare pas:</b> te uiți la toate muchiile care ies din arborele construit până acum spre vârfuri neincluse, și alegi muchia cu ponderea minimă. Adaugi vârful și muchia la arbore. Repeți până incluzi toate vârfurile.</p>
+    <p class="muted" style="margin-bottom:0">Diferența față de Dijkstra: la Dijkstra <code>key[v]</code> = distanța totală de la sursă; la Prim <code>key[v]</code> = ponderea celei mai ieftine muchii <b>singure</b> care leagă v de arbore (nu se acumulează).</p>
+  </div>
+</section>
+
+<section id="comp">
+  <h2>Ce reprezintă fiecare componentă</h2>
+  <div class="card">
+    <div class="keyrow"><span class="k" style="min-width:90px">key[v]</span><span>ponderea celei mai ieftine muchii care leagă v de arborele curent. Pornește ∞ (sau 0 pentru rădăcină).</span></div>
+    <div class="keyrow"><span class="k" style="min-width:90px">π[v]</span><span>vârful din arbore către care duce acea muchie ieftină (părintele lui v în MST).</span></div>
+    <div class="keyrow"><span class="k" style="min-width:90px">Q</span><span>coadă de priorități cu vârfurile <b>încă neincluse</b> în arbore, ordonate după key.</span></div>
+    <div class="keyrow"><span class="k" style="min-width:90px">extract-min</span><span>scoate vârful cu key minim — următorul care intră în arbore.</span></div>
+  </div>
+</section>
+
+<section id="cod">
+  <h2>Implementarea</h2>
+  <div class="codeblock"><span class="fn">MST_PRIM</span>(G, w, r):
+  <span class="kw">for</span> fiecare u ∈ V:
+      u.key = ∞;  u.π = NIL
+  r.key = <span class="var">0</span>                  <span class="cm">// rădăcina</span>
+  Q = V                          <span class="cm">// toate vârfurile</span>
+  <span class="kw">while</span> Q ≠ ∅:
+      u = EXTRACT_MIN(Q)         <span class="cm">// cel mai ieftin de atașat</span>
+      <span class="kw">for</span> v ∈ Adj[u]:
+          <span class="kw">if</span> v ∈ Q <span class="kw">and</span> w(u,v) < v.key:
+              v.π = u            <span class="cm">// actualizez părintele</span>
+              v.key = w(u,v)     <span class="cm">// și muchia ieftină</span></div>
+  <p class="muted">Complexitate: <code>O((V+E) log V)</code> cu heap binar — exact ca Dijkstra.</p>
+</section>
+
+<section id="viz">
+  <h2><span class="tag">Subiect 6</span> Prim pas cu pas</h2>
+  <p class="lead">Graful tău, rădăcină = <b>1</b>. La fiecare pas extragi vârful cu key minim (<span style="color:var(--amber-d)">portocaliu</span>), îl adaugi la arbore (<span style="color:var(--green-d)">verde</span>) și actualizezi key-urile vecinilor. Muchiile MST se îngroașă verde.</p>
+  <div class="viz" id="p-viz">
+    <div class="viz-top">
+      <span class="srclabel">Rădăcină: <b style="color:var(--blue-d)">1</b> &nbsp;·&nbsp; cost MST: <b id="p-cost" style="color:var(--green-d)">0</b> &nbsp;·&nbsp; <span class="step-count" id="p-step"></span></span>
+      <div class="controls">
+        <div class="speed">viteză<input type="range" id="p-speed" min="200" max="1400" value="700" step="50"></div>
+        <button class="ctl" id="p-reset"><span>↺</span>Reset</button>
+        <button class="ctl" id="p-play"><span>▶</span>Auto</button>
+        <button class="ctl primary" id="p-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="p-svg" viewBox="0 0 620 330"></svg>
+    <div class="panel-state">
+      <div class="ds"><div class="ds-lbl">Muchii în MST</div><div class="ds-items" id="p-mst"></div></div>
+      <div class="ds"><div class="ds-lbl">Vârfuri incluse (în ordine)</div><div class="ds-items" id="p-order"></div></div>
+    </div>
+    <div class="explain" id="p-explain">Apasă „Pas →". Rădăcina 1 are key=0, intră prima.</div>
+    <table class="res" id="p-table"></table>
+  </div>
+  <div class="note green">💡 <b>Rezultat final:</b> MST = {1-2, 2-3, 1-4, 2-5, 4-7, 3-6}, cost total <b>21</b>. Ordinea de includere a vârfurilor: 1 → 2 → 3 → 4 → 5 → 7 → 6.</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Algoritmul lui Prim · subiectul 6 · arbore minim de acoperire<br>
+  Kruskal e în pagina separată. Ambele dau același MST (cost 21).
+</footer>
+</div>
+
+<script>
+/* graful subiectului 6 - neorientat */
+const EDGES=[[1,2,1],[1,4,4],[2,3,2],[2,4,6],[2,5,4],[3,5,5],[3,6,6],[4,7,4],[5,6,8],[5,7,7],[6,7,30]];
+const V=[1,2,3,4,5,6,7];
+const POS={
+  1:[60,175], 2:[185,90], 3:[330,70], 4:[185,265],
+  5:[360,200], 6:[490,110], 7:[420,290]
+};
+const ADJ={};V.forEach(v=>ADJ[v]=[]);
+EDGES.forEach(([a,b,w])=>{ADJ[a].push([b,w]);ADJ[b].push([a,w]);});
+
+/* build Prim steps */
+function buildPrim(root){
+  const steps=[];
+  const key={},pi={},inMST={};
+  V.forEach(v=>{key[v]=Infinity;pi[v]=null;inMST[v]=false;});
+  key[root]=0;
+  const order=[];const mst=[];let cost=0;
+  steps.push({key:{...key},pi:{...pi},inMST:{...inMST},extract:null,order:[],mst:[],cost:0,upd:[],
+    msg:`Inițializare: key[${root}]=0, restul ∞. Toate vârfurile în Q.`});
+  for(let it=0;it<V.length;it++){
+    let u=null,best=Infinity;
+    for(const v of V) if(!inMST[v]&&key[v]<best){best=key[v];u=v;}
+    if(u===null)break;
+    inMST[u]=true;order.push(u);
+    if(pi[u]!==null){mst.push([Math.min(pi[u],u),Math.max(pi[u],u),key[u]]);cost+=key[u];}
+    const upd=[];
+    for(const[v,w]of ADJ[u]) if(!inMST[v]&&w<key[v]){key[v]=w;pi[v]=u;upd.push(v);}
+    let msg=`<b>EXTRACT-MIN → ${u}</b> (key=${best}${pi[u]!==null?', muchia '+pi[u]+'-'+u:', rădăcina'}). `;
+    if(pi[u]!==null) msg+=`Adaug muchia ${pi[u]}-${u}(${key[u]}) la MST. `;
+    msg+= upd.length?`Actualizez key: ${upd.map(v=>v+'='+key[v]).join(', ')}.`:'Niciun key de actualizat.';
+    steps.push({key:{...key},pi:{...pi},inMST:{...inMST},extract:u,order:[...order],mst:mst.map(m=>[...m]),cost,upd:[...upd],msg});
+  }
+  steps.push({key:{...key},pi:{...pi},inMST:{...inMST},extract:null,order:[...order],mst:mst.map(m=>[...m]),cost,upd:[],final:true,
+    msg:`<b>Gata!</b> Toate vârfurile incluse. MST are ${mst.length} muchii, cost total <b>${cost}</b>.`});
+  return steps;
+}
+const PRIM=buildPrim(1);
+
+function edgeKey(a,b){return Math.min(a,b)+'-'+Math.max(a,b);}
+function drawP(){
+  const svg=document.getElementById('p-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  EDGES.forEach(([a,b,w],i)=>{
+    const[x1,y1]=POS[a],[x2,y2]=POS[b];
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('class','edge');l.id='p-e'+i;svg.appendChild(l);
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',mx);t.setAttribute('y',my-3);
+    t.setAttribute('class','ew');t.setAttribute('text-anchor','middle');t.textContent=w;
+    t.setAttribute('paint-order','stroke');t.setAttribute('stroke','#fbfaf6');t.setAttribute('stroke-width','3');
+    svg.appendChild(t);
+  });
+  V.forEach(n=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',19);
+    c.setAttribute('class','node-c');c.id='p-n'+n;g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+    const kl=document.createElementNS(ns,'text');kl.setAttribute('x',POS[n][0]);kl.setAttribute('y',POS[n][1]-27);
+    kl.setAttribute('class','node-k');kl.id='p-k'+n;g.appendChild(kl);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0,timer=null;
+  drawP();
+  const elStep=document.getElementById('p-step'),elCost=document.getElementById('p-cost'),
+    elMst=document.getElementById('p-mst'),elOrder=document.getElementById('p-order'),
+    elEx=document.getElementById('p-explain'),elTable=document.getElementById('p-table'),
+    btnNext=document.getElementById('p-next'),btnReset=document.getElementById('p-reset'),
+    btnPlay=document.getElementById('p-play'),speed=document.getElementById('p-speed');
+  function render(){
+    const s=PRIM[idx];
+    elStep.textContent='pas '+idx+' / '+(PRIM.length-1);
+    elCost.textContent=s.cost;
+    V.forEach(n=>{
+      const c=document.getElementById('p-n'+n);let cls='node-c';
+      if(s.extract===n)cls+=' extract';
+      else if(s.inMST[n])cls+=' inmst';
+      else if(n===1)cls+=' src';
+      c.setAttribute('class',cls);
+      const kl=document.getElementById('p-k'+n);
+      kl.textContent = s.inMST[n]?'':(s.key[n]===Infinity?'∞':'k='+s.key[n]);
+    });
+    const mstKeys=s.mst.map(([a,b])=>edgeKey(a,b));
+    EDGES.forEach(([a,b],i)=>{
+      const e=document.getElementById('p-e'+i);let cls='edge';
+      if(mstKeys.includes(edgeKey(a,b)))cls='edge mst';
+      else if(s.extract && (a===s.extract||b===s.extract) && !s.inMST[a===s.extract?b:a])cls='edge cand';
+      e.setAttribute('class',cls);
+    });
+    elMst.innerHTML='';
+    if(s.mst.length)s.mst.forEach(([a,b,w])=>{const x=document.createElement('span');x.className='chip';x.textContent=a+'-'+b+'('+w+')';elMst.appendChild(x);});
+    else elMst.innerHTML='<span class="muted" style="font-size:12px">— gol —</span>';
+    elOrder.innerHTML='';
+    s.order.forEach(n=>{const x=document.createElement('span');x.className='chip';x.textContent=n;elOrder.appendChild(x);});
+    elEx.innerHTML=s.msg;
+    let html='<tr><th>v</th>';V.forEach(n=>html+='<th>'+n+(n===1?' (r)':'')+'</th>');html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">key</td>';V.forEach(n=>{const val=s.key[n]===Infinity?'∞':s.key[n];html+='<td class="'+(s.upd.includes(n)?'upd':'hl')+'">'+val+'</td>';});html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">π</td>';V.forEach(n=>html+='<td>'+(s.pi[n]==null?'–':s.pi[n])+'</td>');html+='</tr>';
+    elTable.innerHTML=html;
+    btnNext.disabled=idx>=PRIM.length-1;
+  }
+  function next(){if(idx<PRIM.length-1){idx++;render();}else stop();}
+  function reset(){stop();idx=0;render();}
+  function stop(){if(timer){clearInterval(timer);timer=null;btnPlay.innerHTML='<span>▶</span>Auto';}}
+  function play(){if(timer){stop();return;}if(idx>=PRIM.length-1)idx=0;btnPlay.innerHTML='<span>⏸</span>Stop';
+    timer=setInterval(()=>{if(idx>=PRIM.length-1){stop();}else{idx++;render();}},1600-speed.value+200);}
+  btnNext.onclick=()=>{stop();next();};btnReset.onclick=reset;btnPlay.onclick=play;
+  speed.oninput=()=>{if(timer){stop();play();}};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'Ce găsește algoritmul lui Prim?',
+   opts:['Cel mai scurt drum','Arborele minim de acoperire (MST)','Fluxul maxim','Ciclul eulerian'],correct:1,
+   why:'Prim construiește <b>arborele minim de acoperire</b>: leagă toate vârfurile cu cost total minim, fără cicluri.'},
+  {q:'Cu ce algoritm seamănă structural Prim?',
+   opts:['DFS','Dijkstra','Bellman-Ford','Kruskal'],correct:1,
+   why:'Prim e aproape identic cu <b>Dijkstra</b>: coadă de priorități, extract-min, relaxare. Diferă doar ce reține key: la Prim e ponderea unei singure muchii, nu distanța cumulată.'},
+  {q:'Ce reprezintă key[v] în Prim?',
+   opts:['Distanța totală de la rădăcină','Ponderea celei mai ieftine muchii care leagă v de arbore','Numărul de vecini','Gradul lui v'],correct:1,
+   why:'<b>key[v]</b> = ponderea celei mai ieftine muchii care conectează v de arborele deja construit. NU se acumulează (diferența față de Dijkstra).'},
+  {q:'Câte muchii are MST-ul unui graf cu n vârfuri?',
+   opts:['n','n−1','n+1','2n'],correct:1,
+   why:'Un arbore cu n vârfuri are exact <b>n−1</b> muchii. Pe graful nostru (7 vârfuri) → 6 muchii.'},
+  {q:'Care e costul total al MST pe graful subiectului 6?',
+   opts:['15','21','25','19'],correct:1,
+   why:'MST = {1-2(1), 2-3(2), 1-4(4), 2-5(4), 4-7(4), 3-6(6)} → 1+2+4+4+4+6 = <b>21</b>.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

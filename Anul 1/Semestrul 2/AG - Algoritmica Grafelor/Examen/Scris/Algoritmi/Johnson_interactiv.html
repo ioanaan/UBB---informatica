@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Algoritmul lui Johnson — drumuri minime toate perechile</title>
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb; --purple-d:#5e3aa0;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--purple);background:var(--purple-bg)}
+  section{margin:44px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;letter-spacing:-.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px;background:var(--purple-bg);color:var(--purple-d)}
+  .step-badge{font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;background:var(--purple-d);color:#fff}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:800px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:var(--blue-d)}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#c0306f}.codeblock .fn{color:var(--amber-d)}.codeblock .cm{color:var(--gray);font-style:italic}.codeblock .var{color:var(--teal-d)}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:var(--amber-d);min-width:90px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:var(--amber-d)}
+  .note.green{background:var(--green-bg);border-color:var(--green-d)}.note.green b{color:var(--green-d)}
+  .note.purple{background:var(--purple-bg);border-color:var(--purple-d)}.note.purple b{color:var(--purple-d)}
+  .flow{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin:20px 0}
+  .flow-step{background:var(--panel);border:1.5px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;text-align:center;min-width:110px}
+  .flow-step b{display:block;font-size:14px;margin-bottom:2px}
+  .flow-arrow{color:var(--muted);font-size:18px}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s}
+  button.ctl:hover{border-color:var(--purple);background:var(--purple-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--purple-d);border-color:var(--purple);color:#fff}
+  button.ctl.primary:hover{background:var(--purple)}
+  svg.graph{width:100%;height:330px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:2;fill:none}
+  .edge.neg{stroke:var(--red-d)}
+  .edge.zero{stroke:var(--green-d)}
+  .ew{font-family:var(--mono);font-size:13px;font-weight:700}
+  .ew.neg{fill:var(--red-d)}
+  .ew.pos{fill:var(--green-d)}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0}
+  .node-c.virtual{fill:var(--purple-d);stroke:var(--purple)}
+  .node-c.active{stroke:var(--amber);stroke-width:3}
+  .node-lbl{fill:#fff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-h{font-size:11px;font-weight:700;text-anchor:middle;font-family:var(--mono);pointer-events:none;fill:var(--purple-d)}
+  .explain{background:#f7f5ef;border-left:3px solid var(--purple);border-radius:0 8px 8px 0;padding:12px 16px;margin-top:14px;font-size:14px;min-height:44px}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:13px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:7px 10px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res td.hl{color:var(--purple-d);font-weight:700}
+  table.res td.na{color:var(--muted)}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Algoritmul lui Johnson</h1>
+  <div class="sub">Drumuri minime toate perechile · reponderare + Dijkstra · subiectul 11</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">De ce există</a>
+  <a href="#pasi">Cei 4 pași</a>
+  <a href="#reweight-viz">Pas 1-2: reponderare</a>
+  <a href="#dijkstra-viz">Pas 3: Dijkstra</a>
+  <a href="#corectare">Pas 4: corectare</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>De ce există Johnson</h2>
+  <p class="lead">Ai deja Floyd-Warshall pentru „toate perechile" — de ce mai există și Johnson? Răspunsul: <b>viteza pe grafuri rare</b> (puține muchii).</p>
+  <table style="width:100%;border-collapse:collapse;margin:14px 0;font-size:14px">
+    <tr><th style="border:0.5px solid var(--line);padding:9px;background:var(--panel2);text-align:left">Algoritm</th><th style="border:0.5px solid var(--line);padding:9px;background:var(--panel2);text-align:left">Complexitate</th></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:9px">Floyd-Warshall</td><td style="border:0.5px solid var(--line);padding:9px"><code>O(V³)</code></td></tr>
+    <tr><td style="border:0.5px solid var(--line);padding:9px">Johnson</td><td style="border:0.5px solid var(--line);padding:9px"><code>O(V² log V + VE)</code></td></tr>
+  </table>
+  <p class="lead">Pe grafuri rare (E mult mai mic decât V²), Johnson e semnificativ mai rapid. Problema: Dijkstra (rapid) <b>nu merge cu ponderi negative</b>. Soluția lui Johnson: transformă graful ca ponderile să devină ≥0, <b>fără să schimbe drumurile minime</b>.</p>
+</section>
+
+<section id="pasi">
+  <h2>Cei 4 pași, pe scurt</h2>
+  <div class="flow">
+    <div class="flow-step"><b>1. Vârf virtual</b>q + arc 0 spre toate</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><b>2. Bellman-Ford</b>din q → h(v)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><b>3. Reponderare</b>w' = w+h(u)−h(v)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><b>4. Dijkstra</b>din fiecare vârf</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><b>5. Corectare</b>d = d'−h(u)+h(v)</div>
+  </div>
+  <div class="note purple">🔑 <b>Ideea centrală:</b> h(v) acționează ca un „potențial". Pe orice drum u→...→v, termenii h se anulează telescopic (h(u) apare cu minus la prima muchie, h(v) cu plus la ultima, restul se reduc între ele) — deci <b>ordinea drumurilor minime rămâne identică</b>, doar valorile se translatează.</div>
+</section>
+
+<section id="reweight-viz">
+  <h2><span class="tag">Subiect 11</span> Pasul 1-2: vârf virtual + reponderare</h2>
+  <p class="lead">Graful tău: <code>1→2(−3)</code>, <code>2→3(−2)</code>, <code>1→3(−1)</code>, <code>4→3(−2)</code>. Are ponderi negative → Dijkstra nu poate rula direct pe el.</p>
+  <div class="viz" id="rw-viz">
+    <div class="viz-top">
+      <span class="step-count" id="rw-step"></span>
+      <div class="controls">
+        <button class="ctl" id="rw-reset">↺ Reset</button>
+        <button class="ctl primary" id="rw-next">Pas →</button>
+      </div>
+    </div>
+    <svg class="graph" id="rw-svg" viewBox="0 0 560 330"></svg>
+    <div class="explain" id="rw-explain">Apasă „Pas →". Adaug vârful virtual q (mov) cu arc de cost 0 spre toate.</div>
+    <table class="res" id="rw-table"></table>
+  </div>
+  <div class="note green">💡 h(v) = distanța minimă de la q la v (calculată cu Bellman-Ford, fiindcă avem ponderi negative). Rezultat: h(1)=0, h(2)=−3, h(3)=−1, h(4)=−3.</div>
+</section>
+
+<section id="dijkstra-viz">
+  <h2>Pasul 3: Dijkstra pe graful reponderat</h2>
+  <p class="lead">Cu ponderile noi (toate ≥0), rulezi Dijkstra <b>din fiecare vârf</b> — asta dă distanțele pe graful reponderat, notate d'.</p>
+  <div class="card">
+    <table class="res">
+      <tr><th>din \ către</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+      <tr><td>1</td><td class="hl">0</td><td class="hl">0</td><td class="hl">0</td><td class="hl">0</td></tr>
+      <tr><td>2</td><td class="na">–</td><td class="hl">0</td><td class="na">–</td><td class="na">–</td></tr>
+      <tr><td>3</td><td class="na">–</td><td class="hl">0</td><td class="hl">0</td><td class="hl">0</td></tr>
+      <tr><td>4</td><td class="na">–</td><td class="na">–</td><td class="na">–</td><td class="hl">0</td></tr>
+    </table>
+    <p class="muted" style="margin-top:10px;margin-bottom:0">„–" = inaccesibil. Observă: toate valorile sunt ≥0, exact cum garantează reponderarea.</p>
+  </div>
+</section>
+
+<section id="corectare">
+  <h2>Pasul 4: corectarea înapoi la distanțe reale</h2>
+  <p class="lead">Distanțele d' sunt pe graful <b>reponderat</b>, nu cele reale. Le corectezi cu formula inversă:</p>
+  <div class="codeblock" style="text-align:center;font-size:16px">d(u,v) = d'(u,v) − h(u) + h(v)</div>
+  <div class="card">
+    <table class="res">
+      <tr><th>din \ către</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+      <tr><td>1</td><td class="hl">0</td><td class="hl">−3</td><td class="hl">−1</td><td class="hl">−3</td></tr>
+      <tr><td>2</td><td class="na">–</td><td class="hl">0</td><td class="na">–</td><td class="na">–</td></tr>
+      <tr><td>3</td><td class="na">–</td><td class="hl">−2</td><td class="hl">0</td><td class="hl">−2</td></tr>
+      <tr><td>4</td><td class="na">–</td><td class="na">–</td><td class="na">–</td><td class="hl">0</td></tr>
+    </table>
+    <p style="margin-top:10px;margin-bottom:0"><b>Exemplu de calcul:</b> d(1,3) = d'(1,3) − h(1) + h(3) = 0 − 0 + (−1) = <b>−1</b>. Verificat identic cu Floyd-Warshall direct pe graful original.</p>
+  </div>
+  <div class="note purple">Acestea sunt <b>distanțele reale</b> ale graful original — Johnson a ajuns la același rezultat ca Floyd-Warshall, dar mai rapid pe grafuri rare.</div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Algoritmul lui Johnson · subiectul 11 · toate perechile pe grafuri rare<br>
+  Warshall și Floyd-Warshall sunt în pagina separată.
+</footer>
+</div>
+
+<script>
+const ARCS=[['1','2',-3],['1','3',-1],['3','2',-2],['3','4',-2]];
+const V=['1','2','3','4'];
+const POS={1:[100,70],3:[100,220],2:[400,70],4:[400,220]};
+const QPOS=[250,270];
+
+/* build reweight steps */
+function buildReweight(){
+  const steps=[];
+  const h={1:0,2:-3,3:-1,4:-3}; // precomputed via Bellman-Ford
+  steps.push({showQ:false,showH:false,reweighted:false,
+    msg:'Graful original are ponderi negative. Dijkstra nu poate rula direct pe el.'});
+  steps.push({showQ:true,showH:false,reweighted:false,
+    msg:'<b>Pasul 1:</b> adaug un vârf virtual <b>q</b> (mov), cu arc de cost 0 spre fiecare vârf al grafului.'});
+  steps.push({showQ:true,showH:true,reweighted:false,
+    msg:'<b>Pasul 2:</b> rulez Bellman-Ford din q. h(1)=0, h(2)=−3, h(3)=−1, h(4)=−3.'});
+  steps.push({showQ:true,showH:true,reweighted:true,final:true,
+    msg:'<b>Pasul 3:</b> repondereez fiecare arc: w&#39;(u,v)=w(u,v)+h(u)−h(v). Toate devin ≥0 (verde).'});
+  return steps;
+}
+const RW=buildReweight();
+const H={1:0,2:-3,3:-1,4:-3};
+function newW(u,v,w){return w+H[u]-H[v];}
+
+function drawRW(){
+  const svg=document.getElementById('rw-svg');const ns='http://www.w3.org/2000/svg';svg.innerHTML='';
+  const defs=document.createElementNS(ns,'defs');
+  defs.innerHTML='<marker id="rwa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b8b4ab" stroke-width="1.5"/></marker>'+
+    '<marker id="rwaq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#7a4fc4" stroke-width="1.2"/></marker>';
+  svg.appendChild(defs);
+  ARCS.forEach(([a,b,w],i)=>{
+    const[x1,y1]=POS[a],[x2,y2]=POS[b];const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy),r=20;
+    const sx=x1+dx/len*r,sy=y1+dy/len*r,ex=x2-dx/len*r,ey=y2-dy/len*r;
+    const mx=(sx+ex)/2,my=(sy+ey)/2,off=14,px=-dy/len*off,py=dx/len*off;
+    const path=document.createElementNS(ns,'path');
+    path.setAttribute('d',`M${sx},${sy} Q${mx+px},${my+py} ${ex},${ey}`);
+    path.setAttribute('class','edge');path.setAttribute('marker-end','url(#rwa)');path.id='rw-e'+i;
+    svg.appendChild(path);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',mx+px*1.3);t.setAttribute('y',my+py*1.3);
+    t.setAttribute('class','ew');t.setAttribute('text-anchor','middle');t.id='rw-w'+i;t.textContent=w;
+    svg.appendChild(t);
+  });
+  // q edges (drawn but hidden initially)
+  V.forEach((v,i)=>{
+    const[x2,y2]=POS[v];
+    const l=document.createElementNS(ns,'line');
+    l.setAttribute('x1',QPOS[0]);l.setAttribute('y1',QPOS[1]);l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('stroke','#7a4fc4');l.setAttribute('stroke-width','1');l.setAttribute('stroke-dasharray','3 3');
+    l.setAttribute('marker-end','url(#rwaq)');l.id='rw-q'+v;l.style.display='none';
+    svg.appendChild(l);
+  });
+  // q node
+  const qc=document.createElementNS(ns,'circle');
+  qc.setAttribute('cx',QPOS[0]);qc.setAttribute('cy',QPOS[1]);qc.setAttribute('r',16);
+  qc.setAttribute('class','node-c virtual');qc.id='rw-nq';qc.style.display='none';
+  svg.appendChild(qc);
+  const qt=document.createElementNS(ns,'text');qt.setAttribute('x',QPOS[0]);qt.setAttribute('y',QPOS[1]);
+  qt.setAttribute('class','node-lbl');qt.textContent='q';qt.id='rw-tq';qt.style.display='none';
+  svg.appendChild(qt);
+  // vertex nodes
+  V.forEach(v=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[v][0]);c.setAttribute('cy',POS[v][1]);c.setAttribute('r',20);
+    c.setAttribute('class','node-c');c.id='rw-n'+v;g.appendChild(c);
+    const t=document.createElementNS(ns,'text');t.setAttribute('x',POS[v][0]);t.setAttribute('y',POS[v][1]);
+    t.setAttribute('class','node-lbl');t.textContent=v;g.appendChild(t);
+    const ht=document.createElementNS(ns,'text');ht.setAttribute('x',POS[v][0]);ht.setAttribute('y',POS[v][1]-28);
+    ht.setAttribute('class','node-h');ht.id='rw-h'+v;g.appendChild(ht);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0;
+  drawRW();
+  const elStep=document.getElementById('rw-step'),elEx=document.getElementById('rw-explain'),
+    elTable=document.getElementById('rw-table'),btnNext=document.getElementById('rw-next'),btnReset=document.getElementById('rw-reset');
+  function render(){
+    const s=RW[idx];
+    elStep.textContent='pas '+idx+' / '+(RW.length-1);
+    document.getElementById('rw-nq').style.display=s.showQ?'':'none';
+    document.getElementById('rw-tq').style.display=s.showQ?'':'none';
+    V.forEach(v=>{
+      document.getElementById('rw-q'+v).style.display=s.showQ?'':'none';
+      document.getElementById('rw-h'+v).textContent=s.showH?'h='+H[v]:'';
+    });
+    ARCS.forEach(([a,b,w],i)=>{
+      const t=document.getElementById('rw-w'+i);
+      const e=document.getElementById('rw-e'+i);
+      if(s.reweighted){
+        const wn=newW(a,b,w);
+        t.textContent=w+' → '+wn;
+        t.setAttribute('class','ew '+(wn<0?'neg':'pos'));
+        e.setAttribute('class','edge '+(wn<0?'neg':'zero'));
+      } else {
+        t.textContent=w;
+        t.setAttribute('class','ew neg');
+        e.setAttribute('class','edge');
+      }
+    });
+    elEx.innerHTML=s.msg;
+    if(s.final){
+      let html='<tr><th>arc</th><th>calcul</th><th>w&#39; nou</th></tr>';
+      ARCS.forEach(([a,b,w])=>{
+        const wn=newW(a,b,w);
+        html+=`<tr><td>${a}→${b}</td><td>${w} + h(${a})(${H[a]}) − h(${b})(${H[b]})</td><td class="hl">${wn}</td></tr>`;
+      });
+      elTable.innerHTML=html;
+    } else elTable.innerHTML='';
+    btnNext.disabled=idx>=RW.length-1;
+  }
+  btnNext.onclick=()=>{if(idx<RW.length-1){idx++;render();}};
+  btnReset.onclick=()=>{idx=0;render();};
+  render();
+})();
+
+/* QUIZ */
+const QUIZ=[
+  {q:'De ce e Johnson mai rapid decât Floyd-Warshall pe grafuri rare?',
+   opts:['Nu e mai rapid','O(V²logV+VE) bate O(V³) când E e mic','Folosește mai puțină memorie','E mai simplu de implementat'],correct:1,
+   why:'Pe grafuri rare (E mic), <code>O(V² log V + VE)</code> e mai bun decât <code>O(V³)</code> al lui Floyd-Warshall.'},
+  {q:'De ce adaugă Johnson un vârf virtual q?',
+   opts:['Ca decor','Ca să calculeze h(v) = distanța de la q, folosită la reponderare','Ca sursă pentru Dijkstra final','Nu e necesar'],correct:1,
+   why:'q are arc 0 spre toate vârfurile. Bellman-Ford din q dă <b>h(v)</b>, folosit apoi pentru reponderare.'},
+  {q:'Care e formula de reponderare?',
+   opts:['w&#39;=w×h(u)','w&#39;=w+h(u)−h(v)','w&#39;=w−h(u)+h(v)','w&#39;=h(u)+h(v)'],correct:1,
+   why:'<code>w&#39;(u,v) = w(u,v) + h(u) − h(v)</code>. Garantează ponderi ≥0 fără să schimbe ordinea drumurilor minime.'},
+  {q:'De ce se folosește Bellman-Ford (nu Dijkstra) pentru h(v)?',
+   opts:['E mai rapid','Graful original poate avea ponderi negative','E mai simplu','Nu contează care'],correct:1,
+   why:'La acest pas graful <b>încă are ponderi negative</b> (nu s-a reponderat). Doar Bellman-Ford le suportă.'},
+  {q:'După reponderare, ce algoritm rulează Johnson din fiecare vârf?',
+   opts:['Bellman-Ford','Dijkstra','BFS','Bellman-Kalaba'],correct:1,
+   why:'Odată ponderile ≥0, poți folosi <b>Dijkstra</b> (rapid) din fiecare vârf, în loc de Bellman-Ford (lent).'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>

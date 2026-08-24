@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bellman-Ford — drumuri minime + cicluri negative</title>
+<style>
+    :root{
+    --bg:#f4f2ec; --panel:#ffffff; --panel2:#f0ede5; --ink:#1f2128; --muted:#6b6860;
+    --line:#dcd8cf; --blue:#1f6fc4; --blue-d:#1559a3; --blue-bg:#e3eefb;
+    --teal:#0e8a63; --teal-d:#0a6e4f; --teal-bg:#dcf2ea;
+    --amber:#c47a10; --amber-d:#a8650a; --amber-bg:#fbf0d8;
+    --green:#5d8a2e; --green-bg:#e8f3d8; --green-d:#4a7026; --gray:#8a877f;
+    --red:#d13b3a; --red-bg:#fbe0e0; --red-d:#b02f2e;
+    --purple:#7a4fc4; --purple-bg:#ece3fb;
+    --mono:'SF Mono',ui-monospace,'Cascadia Code',Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.7;
+    background-image:radial-gradient(circle at 15% 10%,#eae6dc 0,transparent 40%),radial-gradient(circle at 85% 90%,#e6eaf0 0,transparent 45%);}
+  .wrap{max-width:1000px;margin:0 auto;padding:32px 20px 80px}
+  header{text-align:center;margin-bottom:8px}
+  h1{font-size:34px;font-weight:600;letter-spacing:-1px;margin-bottom:4px}
+  .sub{color:var(--muted);font-size:15px}
+  .toc{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:28px 0 36px}
+  .toc a{font-size:13px;color:var(--muted);text-decoration:none;padding:7px 14px;border:0.5px solid var(--line);
+    border-radius:999px;transition:.2s;background:var(--panel)}
+  .toc a:hover{color:var(--ink);border-color:var(--blue);background:var(--blue-bg)}
+  section{margin:40px 0;scroll-margin-top:20px}
+  h2{font-size:24px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px;letter-spacing:-.5px;flex-wrap:wrap}
+  .tag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px}
+  .tag.q{background:var(--blue-bg);color:#85B7EB}
+  .lead{color:var(--muted);font-size:15px;margin-bottom:20px;max-width:780px}
+  .card{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:22px 24px;margin:16px 0}
+  .card h3{font-size:16px;font-weight:600;margin-bottom:10px}
+  p{margin-bottom:12px}
+  .muted{color:var(--muted)}
+  code{font-family:var(--mono);background:var(--panel2);padding:2px 6px;border-radius:5px;font-size:.88em;color:#85B7EB}
+  .codeblock{font-family:var(--mono);font-size:13px;background:#f7f5ef;border:0.5px solid var(--line);
+    border-radius:10px;padding:16px 18px;overflow-x:auto;line-height:1.6;margin:12px 0;white-space:pre}
+  .codeblock .kw{color:#D4537E}.codeblock .fn{color:#EF9F27}.codeblock .cm{color:#5F5E5A;font-style:italic}.codeblock .var{color:#5DCAA5}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+  .keyrow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}
+  .keyrow .k{font-family:var(--mono);font-size:13px;color:#EF9F27;min-width:70px;font-weight:600}
+  .note{font-size:13px;color:var(--muted);background:var(--amber-bg);border:0.5px solid var(--amber-d);
+    border-radius:8px;padding:10px 14px;margin:12px 0}
+  .note b{color:#EF9F27}
+  .note.red{background:var(--red-bg);border-color:var(--red-d)}
+  .note.red b{color:#ff6b6a}
+  .viz{background:var(--panel);border:0.5px solid var(--line);border-radius:14px;padding:20px;margin:18px 0}
+  .viz-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  button.ctl{font-family:var(--sans);font-size:13px;padding:8px 16px;border-radius:8px;border:0.5px solid var(--line);
+    background:var(--panel2);color:var(--ink);cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px}
+  button.ctl:hover{border-color:var(--blue);background:var(--blue-bg)}
+  button.ctl:disabled{opacity:.35;cursor:default}
+  button.ctl.primary{background:var(--blue-d);border-color:var(--blue);color:#fff}
+  button.ctl.primary:hover{background:var(--blue)}
+  .srclabel{font-size:12px;color:var(--muted)}
+  svg.graph{width:100%;height:340px;background:#fbfaf6;border-radius:10px;border:0.5px solid var(--line)}
+  .edge{stroke:#b8b4ab;stroke-width:1.8;fill:none}
+  .edge.tree{stroke:var(--amber);stroke-width:3}
+  .edge.active{stroke:var(--blue);stroke-width:3.5}
+  .edge.cycle{stroke:var(--red);stroke-width:3.5}
+  .ew{font-family:var(--mono);font-size:12px;font-weight:600;fill:#3a3833}
+  .ew.neg{fill:#ff8a89}
+  .node-c{stroke:rgba(0,0,0,.2);stroke-width:1.5;fill:#9aa3b0;transition:fill .3s,stroke .3s}
+  .node-c.src{fill:var(--blue-d);stroke:var(--blue)}
+  .node-c.upd{fill:var(--teal-d);stroke:var(--teal)}
+  .node-c.cyc{fill:var(--red-d);stroke:var(--red);stroke-width:3}
+  .node-lbl{fill:#ffffff;font-size:14px;font-weight:600;text-anchor:middle;dominant-baseline:central;font-family:var(--sans);pointer-events:none}
+  .node-d{font-size:11px;font-weight:700;text-anchor:middle;font-family:var(--mono);pointer-events:none;fill:#EF9F27}
+  .explain{background:#f7f5ef;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;
+    padding:12px 16px;margin-top:14px;font-size:14px;min-height:48px}
+  .explain.red{border-left-color:var(--red)}
+  .step-count{font-size:12px;color:var(--muted);font-family:var(--mono)}
+  table.res{width:100%;border-collapse:collapse;margin-top:14px;font-family:var(--mono);font-size:12px}
+  table.res th,table.res td{border:0.5px solid var(--line);padding:6px 8px;text-align:center}
+  table.res th{background:var(--panel2);color:var(--muted);font-weight:600}
+  table.res td.hl{color:#85B7EB}
+  table.res td.drop{color:#ff8a89;font-weight:700}
+  .speed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  input[type=range]{width:90px}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:60px;padding-top:24px;border-top:0.5px solid var(--line)}
+  .iterbadge{display:inline-block;background:var(--purple-bg);color:#c4a3ee;font-family:var(--mono);
+    font-size:12px;padding:3px 10px;border-radius:6px;border:0.5px solid #5a3d80}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Bellman-Ford</h1>
+  <div class="sub">Drumuri minime de la o sursă · cu ponderi negative · detectarea ciclului negativ · subiectul 4</div>
+</header>
+
+<nav class="toc">
+  <a href="#idee">Ideea</a>
+  <a href="#relax">RELAX</a>
+  <a href="#dece">De ce |V|−1</a>
+  <a href="#cod">Cod</a>
+  <a href="#viz">Rulare pas cu pas</a>
+  <a href="#detect">Detectarea ciclului</a>
+  <a href="#capcana">Capcana subiectului</a>
+  <a href="#test">Test</a>
+</nav>
+
+<section id="idee">
+  <h2>Ce face și de ce există</h2>
+  <p class="lead">Bellman-Ford găsește drumul de cost minim de la o sursă <code>s</code> la toate celelalte vârfuri într-un graf orientat ponderat. Spre deosebire de Dijkstra, <b>acceptă ponderi negative</b> — și, crucial, <b>detectează dacă există un ciclu de cost negativ</b> accesibil din sursă.</p>
+  <div class="grid2">
+    <div class="card" style="border-color:var(--blue-d)">
+      <h3 style="color:#85B7EB">Ce returnează</h3>
+      <p class="muted">O valoare booleană: <b>TRUE</b> dacă totul e ok (și atunci <code>d</code>, <code>π</code> conțin drumurile minime), sau <b>FALSE</b> dacă există un ciclu negativ accesibil din <code>s</code> (caz în care drumurile minime nici nu sunt bine definite — poți scădea costul la infinit învârtindu-te în ciclu).</p>
+    </div>
+    <div class="card" style="border-color:var(--teal-d)">
+      <h3 style="color:#5DCAA5">Atributele reținute</h3>
+      <div class="keyrow"><span class="k">v.d</span><span>estimarea curentă a costului minim de la s la v (pornește ∞, scade)</span></div>
+      <div class="keyrow"><span class="k">v.π</span><span>predecesorul lui v pe drumul minim curent</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="relax">
+  <h2>Operația RELAX — inima algoritmului</h2>
+  <p class="lead">Tot ce face Bellman-Ford (și Dijkstra) se reduce la o operație repetată: <b>relaxarea</b> unui arc. „Relaxez arcul (u,v)" înseamnă: <i>verific dacă e mai ieftin să ajung la v trecând prin u</i>.</p>
+  <div class="codeblock"><span class="fn">RELAX</span>(u, v, w):
+  <span class="kw">if</span> v.d > u.d + w(u,v):     <span class="cm">// drumul prin u e mai scurt?</span>
+      v.d = u.d + w(u,v)        <span class="cm">// da → actualizez estimarea</span>
+      v.π = u                   <span class="cm">// și rețin că am venit din u</span></div>
+  <div class="card">
+    <p style="margin-bottom:6px"><b>Intuiție:</b> ai o estimare curentă a costului până la v (<code>v.d</code>). Vine informația „uite, până la u costă <code>u.d</code>, și de la u la v mai e <code>w</code>". Dacă <code>u.d + w</code> e mai mic decât ce aveai, ai găsit un drum mai bun → îl reții.</p>
+    <p class="muted" style="margin-bottom:0">Proprietate garantată: după orice relaxare, <code>v.d ≥ δ(s,v)</code> (estimarea nu scade niciodată sub costul real). Relaxările doar o apropie treptat de adevăr.</p>
+  </div>
+</section>
+
+<section id="dece">
+  <h2>De ce exact |V|−1 iterații?</h2>
+  <p class="lead">Algoritmul relaxează <b>toate</b> arcele, și repetă asta de |V|−1 ori. De ce fix atât?</p>
+  <div class="card">
+    <p>Un drum minim într-un graf cu |V| vârfuri are <b>cel mult |V|−1 arce</b> (dacă ar avea mai multe, ar repeta un vârf → ar conține un ciclu, iar ciclurile nenegative pot fi eliminate fără să crească costul).</p>
+    <p>La <b>fiecare iterație completă</b>, garantezi că „extinzi" corect drumurile cu încă un arc. După iterația 1, toate drumurile minime de 1 arc sunt corecte. După iterația 2, cele de 2 arce. ... După iterația |V|−1, <b>toate</b> drumurile minime sunt găsite.</p>
+    <div class="note"><b>Cheia:</b> dacă graful NU are cicluri negative, după |V|−1 iterații nimic nu se mai schimbă. Dacă <b>încă se mai poate relaxa ceva</b> la iterația |V| → înseamnă că există un drum „minim" cu |V| arce, ceea ce e imposibil fără un ciclu negativ. <b>Exact așa îl detectează.</b></div>
+  </div>
+</section>
+
+<section id="cod">
+  <h2>Implementarea completă</h2>
+  <div class="codeblock"><span class="fn">BELLMAN_FORD</span>(G, w, s):
+  INIT(G, s)                          <span class="cm">// d[v]=∞, π[v]=NIL, d[s]=0</span>
+  <span class="kw">for</span> i = 1 <span class="kw">to</span> |V| − 1:             <span class="cm">// |V|−1 iterații</span>
+      <span class="kw">for</span> fiecare arc (u,v) ∈ E:      <span class="cm">// relaxez TOATE arcele</span>
+          RELAX(u, v, w)
+  <span class="cm">// ── pasul de verificare a ciclului negativ ──</span>
+  <span class="kw">for</span> fiecare arc (u,v) ∈ E:
+      <span class="kw">if</span> v.d > u.d + w(u,v):          <span class="cm">// se mai poate relaxa?</span>
+          <span class="kw">return</span> FALSE                  <span class="cm">// ⇒ ciclu negativ!</span>
+  <span class="kw">return</span> TRUE</div>
+  <p class="muted">Complexitate: <code>O(V·E)</code> — |V|−1 iterații × |E| arce. Mai lent decât Dijkstra, dar mai general.</p>
+</section>
+
+<section id="viz">
+  <h2><span class="tag q">Subiect 4</span> Rulare pas cu pas</h2>
+  <p class="lead">Graful tău, sursă = <code>f</code>. Urmărește cum distanțele coboară iterație cu iterație. <b>Atenție la vârful d</b> — distanța lui continuă să scadă (−1 → −3 → −5...), semn că ceva nu e în regulă. Fiecare „pas" aici = o iterație completă (toate arcele relaxate o dată).</p>
+  <div class="viz" id="bf-viz">
+    <div class="viz-top">
+      <span class="srclabel">Sursă: <b style="color:#85B7EB">f</b> &nbsp;·&nbsp; <span class="iterbadge" id="bf-iter">înainte de iterația 1</span> &nbsp;·&nbsp; <span class="step-count" id="bf-step"></span></span>
+      <div class="controls">
+        <button class="ctl" id="bf-reset"><span>↺</span>Reset</button>
+        <button class="ctl primary" id="bf-next">Iterația următoare →</button>
+      </div>
+    </div>
+    <svg class="graph" id="bf-svg" viewBox="0 0 620 340"></svg>
+    <div class="explain" id="bf-explain">Apasă „Iterația următoare". La început doar d[f]=0, restul ∞.</div>
+    <table class="res" id="bf-table"></table>
+  </div>
+  <div class="note">Numerele <span style="color:#ff8a89">roșii</span> în tabel = valori care au scăzut în iterația curentă. Observă că după iterația 4 ele nu se mai stabilizează — continuă să scadă la fiecare ciclu complet.</div>
+</section>
+
+<section id="detect">
+  <h2>Momentul detectării</h2>
+  <p class="lead">După cele |V|−1 = 8 iterații, rulăm pasul de verificare: mai încercăm o dată să relaxăm toate arcele. Dacă vreunul reușește, e dovada ciclului negativ.</p>
+  <div class="card">
+    <h3 style="color:#ff6b6a">Arcele care se mai pot relaxa (după 8 iterații)</h3>
+    <div class="codeblock"><span style="color:#ff8a89">d→c</span>:  d[d] + 1  = −5 + 1 = −4  &lt;  d[c] = −2   ✗ se mai poate!
+<span style="color:#ff8a89">d→f</span>:  d[d] + 2  = −5 + 2 = −3  &lt;  d[f] = −1   ✗ se mai poate!
+<span style="color:#ff8a89">d→h</span>:  d[d] + 2  = −5 + 2 = −3  &lt;  d[h] = −1   ✗ se mai poate!</div>
+    <p style="margin-bottom:0">Fiindcă <b>cel puțin un arc se mai poate relaxa</b>, algoritmul returnează <b style="color:#ff6b6a">FALSE</b>.</p>
+  </div>
+  <div class="card">
+    <h3>Ciclul negativ vinovat</h3>
+    <p>Urmărind de ce d[d] tot scade, găsim ciclul:</p>
+    <div class="codeblock">b → e → d → c → b
+−2   −3    1    2     =  <span style="color:#ff8a89">−2  (negativ!)</span></div>
+    <p class="muted" style="margin-bottom:0">De fiecare dată când „parcurgi" mental acest ciclu, costul total scade cu 2. Poți repeta la infinit → nu există un drum minim bine definit. De-asta Bellman-Ford spune FALSE în loc să dea distanțe.</p>
+  </div>
+</section>
+
+<section id="capcana">
+  <h2>⚠️ Capcana subiectului — citește asta</h2>
+  <div class="note red"><b>Greșeala clasică:</b> studentul vede „a플icați Bellman-Ford" și începe să umple tabelul cu distanțe, apoi scrie un set de valori d și π ca răspuns final. <b>Greșit aici.</b> Pe acest graf, răspunsul corect la „ce întoarce algoritmul?" este:<br><br>
+  <b style="color:#ff6b6a">FALSE</b> — pentru că există ciclul negativ <code>b→e→d→c→b</code> (sumă −2) accesibil din sursă. Distanțele nu converg; ele scad nelimitat.</div>
+  <div class="card">
+    <h3>Cum scrii răspunsul ca să iei punctajul complet</h3>
+    <p>1. Rulează câteva iterații și <b>arată în tabel</b> că distanțele unor vârfuri (d, c, f, h, g) continuă să scadă — nu se stabilizează.</p>
+    <p>2. La pasul de verificare, <b>numește un arc concret</b> care încă se poate relaxa (ex. <code>d→c</code>: −5+1 &lt; −2).</p>
+    <p>3. <b>Identifică ciclul negativ</b> explicit: <code>b→e→d→c→b</code>, sumă = −2.</p>
+    <p style="margin-bottom:0">4. Concluzie: <b>algoritmul returnează FALSE</b> (nu există soluție / drum minim nedefinit).</p>
+  </div>
+</section>
+
+<section id="test">
+  <h2>Auto-test</h2>
+  <div id="quiz"></div>
+</section>
+
+<footer>
+  Bellman-Ford · subiectul 4 · Algoritmica Grafurilor<br>
+  Următorul: Dijkstra (subiectul 5). Spune-mi când continuăm.
+</footer>
+</div>
+
+<script>
+/* ===== SUBIECT 4 — arce date de user, sursă f ===== */
+const ARCS=[['s','a',4],['s','b',4],['b','d',4],['b','e',-2],['c','s',3],['c','b',2],
+  ['d','c',1],['d','f',2],['d','g',7],['d','h',2],['e','a',3],['e','d',-3],
+  ['f','e',2],['h','c',10],['h','g',-2]];
+const V=['s','a','b','c','d','e','f','g','h'];
+const POS={
+  s:[55,210], a:[185,70], e:[330,95], f:[470,55],
+  b:[215,205], d:[360,210], g:[520,150],
+  c:[230,310], h:[470,300]
+};
+const CYCLE_EDGES=[['b','e'],['e','d'],['d','c'],['c','b']];
+
+/* precompute iteration snapshots */
+function buildBF(src){
+  const snaps=[];
+  const d={},pi={};
+  V.forEach(v=>{d[v]=Infinity;pi[v]=null;});
+  d[src]=0;
+  snaps.push({iter:0,d:{...d},pi:{...pi},changed:[],msg:`Inițializare: d[${src}]=0, restul ∞.`,phase:'init'});
+  for(let i=1;i<V.length;i++){
+    const changed=[];
+    for(const[u,v,w]of ARCS){
+      if(d[u]!==Infinity && d[u]+w<d[v]){d[v]=d[u]+w;pi[v]=u;changed.push(v);}
+    }
+    snaps.push({iter:i,d:{...d},pi:{...pi},changed:[...new Set(changed)],phase:'iter',
+      msg:`Iterația ${i}: am relaxat toate arcele. ${changed.length?'Au scăzut: '+[...new Set(changed)].join(', ')+'.':'Nimic nu s-a schimbat.'}`});
+  }
+  // verification
+  const negArcs=[];
+  for(const[u,v,w]of ARCS) if(d[u]!==Infinity && d[u]+w<d[v]) negArcs.push([u,v]);
+  snaps.push({iter:V.length,d:{...d},pi:{...pi},changed:[],phase:'check',negArcs,
+    msg:`Pas de verificare (iterația ${V.length}): arcele d→c, d→f, d→h ÎNCĂ se pot relaxa ⇒ există ciclu negativ ⇒ <b style="color:#ff6b6a">return FALSE</b>.`});
+  return snaps;
+}
+const BF=buildBF('f');
+
+/* curved edge path for directed arcs */
+function arcPath(a,b){
+  const[x1,y1]=POS[a],[x2,y2]=POS[b];
+  const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy);
+  const r=22;
+  // shorten ends to node radius
+  const sx=x1+dx/len*r, sy=y1+dy/len*r;
+  const ex=x2-dx/len*r, ey=y2-dy/len*r;
+  // curve offset perpendicular
+  const mx=(sx+ex)/2, my=(sy+ey)/2;
+  const off=13;
+  const px=-dy/len*off, py=dx/len*off;
+  return {d:`M${sx},${sy} Q${mx+px},${my+py} ${ex},${ey}`, lx:mx+px*1.15, ly:my+py*1.15};
+}
+
+function drawBF(){
+  const svg=document.getElementById('bf-svg');
+  const ns='http://www.w3.org/2000/svg';
+  svg.innerHTML='';
+  // arrow marker
+  const defs=document.createElementNS(ns,'defs');
+  defs.innerHTML='<marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#b8b4ab" stroke-width="1.5"/></marker>'+
+    '<marker id="ahc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1,1 L9,5 L1,9" fill="none" stroke="#E24B4A" stroke-width="2"/></marker>';
+  svg.appendChild(defs);
+  ARCS.forEach(([a,b,w],i)=>{
+    const p=arcPath(a,b);
+    const path=document.createElementNS(ns,'path');
+    path.setAttribute('d',p.d);path.setAttribute('class','edge');
+    path.setAttribute('marker-end','url(#ah)');path.id='bf-e'+i;
+    svg.appendChild(path);
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',p.lx);t.setAttribute('y',p.ly);
+    t.setAttribute('class','ew'+(w<0?' neg':''));t.setAttribute('text-anchor','middle');
+    t.textContent=w;t.id='bf-w'+i;
+    svg.appendChild(t);
+  });
+  V.forEach(n=>{
+    const g=document.createElementNS(ns,'g');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',POS[n][0]);c.setAttribute('cy',POS[n][1]);c.setAttribute('r',20);
+    c.setAttribute('class','node-c'+(n==='f'?' src':''));c.id='bf-n'+n;
+    g.appendChild(c);
+    const t=document.createElementNS(ns,'text');
+    t.setAttribute('x',POS[n][0]);t.setAttribute('y',POS[n][1]);
+    t.setAttribute('class','node-lbl');t.textContent=n;g.appendChild(t);
+    const dl=document.createElementNS(ns,'text');
+    dl.setAttribute('x',POS[n][0]);dl.setAttribute('y',POS[n][1]-28);
+    dl.setAttribute('class','node-d');dl.id='bf-d'+n;g.appendChild(dl);
+    svg.appendChild(g);
+  });
+}
+
+(function(){
+  let idx=0;
+  drawBF();
+  const elIter=document.getElementById('bf-iter');
+  const elStep=document.getElementById('bf-step');
+  const elEx=document.getElementById('bf-explain');
+  const elTable=document.getElementById('bf-table');
+  const btnNext=document.getElementById('bf-next');
+  const btnReset=document.getElementById('bf-reset');
+  let prevD=null;
+
+  function render(){
+    const s=BF[idx];
+    elStep.textContent='('+idx+'/'+(BF.length-1)+')';
+    elIter.textContent = s.phase==='init'?'înainte de iterația 1':
+      s.phase==='check'?'PAS DE VERIFICARE':'după iterația '+s.iter;
+    // nodes
+    V.forEach(n=>{
+      const c=document.getElementById('bf-n'+n);
+      let cls='node-c';
+      if(n==='f') cls+=' src';
+      if(s.phase==='check' && s.negArcs.some(([u,v])=>u===n||v===n)) cls+=' cyc';
+      else if(s.changed.includes(n)) cls+=' upd';
+      c.setAttribute('class',cls);
+      const dl=document.getElementById('bf-d'+n);
+      dl.textContent = s.d[n]===Infinity?'∞':s.d[n];
+    });
+    // edges
+    ARCS.forEach(([a,b],i)=>{
+      const e=document.getElementById('bf-e'+i);
+      let cls='edge';let marker='url(#ah)';
+      if(s.phase==='check' && CYCLE_EDGES.some(([u,v])=>u===a&&v===b)){cls='edge cycle';marker='url(#ahc)';}
+      else if(s.pi[b]===a) cls='edge tree';
+      e.setAttribute('class',cls);e.setAttribute('marker-end',marker);
+    });
+    // table
+    let html='<tr><th>iter \\ v</th>';V.forEach(n=>html+='<th>'+n+(n==='f'?' (s)':'')+'</th>');html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">d</td>';
+    V.forEach(n=>{
+      const val=s.d[n]===Infinity?'∞':s.d[n];
+      const dropped = prevD && prevD[n]!==undefined && s.d[n]<prevD[n];
+      html+='<td class="'+(dropped?'drop':'hl')+'">'+val+'</td>';
+    });
+    html+='</tr>';
+    html+='<tr><td style="color:var(--muted)">π</td>';V.forEach(n=>html+='<td>'+(s.pi[n]==null?'–':s.pi[n])+'</td>');html+='</tr>';
+    elTable.innerHTML=html;
+    elEx.innerHTML=s.msg;
+    elEx.className='explain'+(s.phase==='check'?' red':'');
+    btnNext.disabled = idx>=BF.length-1;
+    btnNext.textContent = idx>=BF.length-2 ? 'Verificare ciclu →' : 'Iterația următoare →';
+    if(idx>=BF.length-1) btnNext.textContent='— gata —';
+  }
+  function next(){if(idx<BF.length-1){prevD={...BF[idx].d};idx++;render();}}
+  function reset(){idx=0;prevD=null;render();}
+  btnNext.onclick=next;btnReset.onclick=reset;
+  render();
+})();
+
+/* ===== QUIZ ===== */
+const QUIZ=[
+  {q:'Ce avantaj are Bellman-Ford față de Dijkstra?',
+   opts:['E mai rapid','Acceptă ponderi negative și detectează cicluri negative','Folosește mai puțină memorie','Funcționează doar pe arbori'],correct:1,
+   why:'Bellman-Ford e mai lent (O(VE) vs O((V+E)logV)), dar <b>acceptă ponderi negative</b> și poate <b>detecta cicluri negative</b> — lucruri pe care Dijkstra nu le poate face.'},
+  {q:'De câte ori relaxează Bellman-Ford toate arcele (în bucla principală)?',
+   opts:['|V| ori','|E| ori','|V|−1 ori','o singură dată'],correct:2,
+   why:'<b>|V|−1 iterații</b>, fiindcă un drum minim are cel mult |V|−1 arce. După atâtea iterații, toate drumurile minime sunt găsite (dacă nu există ciclu negativ).'},
+  {q:'Cum detectează algoritmul un ciclu negativ?',
+   opts:['Numără arcele negative','La iterația |V| încă se mai poate relaxa un arc','Verifică dacă graful e conex','Compară d cu π'],correct:1,
+   why:'După |V|−1 iterații totul ar trebui să fie stabil. Dacă la <b>pasul de verificare (iterația |V|)</b> un arc tot se mai poate relaxa, e dovada unui ciclu negativ → return FALSE.'},
+  {q:'Pe graful subiectului 4, ce întoarce Bellman-Ford?',
+   opts:['Un tabel de distanțe valide','TRUE','FALSE (există ciclu negativ)','∞ pentru toate'],correct:2,
+   why:'Graful conține ciclul negativ <code>b→e→d→c→b</code> (sumă −2). Distanțele scad nelimitat ⇒ algoritmul returnează <b>FALSE</b>.'},
+  {q:'Care e suma ciclului b→e→d→c→b?',
+   opts:['+7','−2','0','−5'],correct:1,
+   why:'(−2) + (−3) + 1 + 2 = <b>−2</b>. Fiind negativă, orice „tur" al ciclului scade costul cu 2.'},
+];
+(function(){
+  const box=document.getElementById('quiz');
+  QUIZ.forEach((item,qi)=>{
+    const card=document.createElement('div');card.className='card';
+    const h=document.createElement('p');h.style.fontWeight='600';h.style.marginBottom='12px';h.innerHTML=(qi+1)+'. '+item.q;card.appendChild(h);
+    const opts=document.createElement('div');opts.style.display='flex';opts.style.flexDirection='column';opts.style.gap='8px';
+    const fb=document.createElement('div');fb.className='explain';fb.style.display='none';
+    item.opts.forEach((o,oi)=>{
+      const b=document.createElement('button');b.className='ctl';b.style.justifyContent='flex-start';b.style.textAlign='left';
+      b.innerHTML=String.fromCharCode(97+oi)+') '+o;
+      b.onclick=()=>{
+        Array.from(opts.children).forEach(x=>x.disabled=true);
+        if(oi===item.correct){b.style.background='var(--green-bg)';b.style.borderColor='var(--green)';b.innerHTML='✓ '+b.innerHTML;}
+        else{b.style.background='var(--red-bg)';b.style.borderColor='var(--red)';b.innerHTML='✗ '+b.innerHTML;
+          const cb=opts.children[item.correct];cb.style.background='var(--green-bg)';cb.style.borderColor='var(--green)';}
+        fb.style.display='block';fb.innerHTML='<b>'+(oi===item.correct?'Corect! ':'Corect: '+String.fromCharCode(97+item.correct)+'. ')+'</b>'+item.why;
+      };
+      opts.appendChild(b);
+    });
+    card.appendChild(opts);card.appendChild(fb);box.appendChild(card);
+  });
+})();
+</script>
+</body>
+</html>
