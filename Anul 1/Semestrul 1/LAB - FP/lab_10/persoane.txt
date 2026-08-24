@@ -1,0 +1,12 @@
+1203;Ionel;Suceava
+99703;Alina;Suceava
+27644;Maria;Brasov
+78102;Camelia;Suceava
+32676;Razvan;Adjud
+50863;Marius;Constanta
+29028;Alina;Bacau
+78473;Maria;Sibiu
+34971;Ioana;Sibiu
+24329;Veronica;Sibiu
+19905;Camelia;Bucuresti
+1793;Ion;Bacau

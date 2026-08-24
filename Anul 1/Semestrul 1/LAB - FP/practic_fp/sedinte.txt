@@ -1,0 +1,9 @@
+12.01,12:00,info,normala
+15.01,13:00,infor,normala
+12.02,12:00,consiliu,normala
+15.03,14:00,acte,extraordinara
+15.01,16:00,bani,extraordinara
+15.01,18:00,finante,extraordinara
+05.02,10:15,firme,normala
+16.01,12:00,firma,normala
+26.03,15:00,bani,normala
