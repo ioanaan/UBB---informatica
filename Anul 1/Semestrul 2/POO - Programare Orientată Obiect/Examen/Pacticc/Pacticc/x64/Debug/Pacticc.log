@@ -1,0 +1,34 @@
+﻿   Qt/MSBuild: 3.5.0.0
+  Reading Qt configuration (C:/Qt/6.11.1/msvc2022_64/bin/qmake)
+   Qt: 6.11.1
+  Repo.cpp
+  service.cpp
+  StareWindow.cpp
+  Task.cpp
+  teste.cpp
+  GUI.cpp
+  Pacticc.cpp
+  main.cpp
+C:\Qt\6.11.1\msvc2022_64\include\QtGui\qguiapplication.h(168,10): warning C4996: 'QCoreApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'main.cpp')
+  
+C:\Qt\6.11.1\msvc2022_64\include\QtWidgets\qapplication.h(146,10): warning C4996: 'QGuiApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'main.cpp')
+  
+C:\Qt\6.11.1\msvc2022_64\include\QtGui\qguiapplication.h(168,10): warning C4996: 'QCoreApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'Pacticc.cpp')
+  
+C:\Qt\6.11.1\msvc2022_64\include\QtWidgets\qapplication.h(146,10): warning C4996: 'QGuiApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'Pacticc.cpp')
+  
+  qrc_Pacticc.cpp
+  moc_Pacticc.cpp
+  moc_GUI.cpp
+  moc_StareWindow.cpp
+C:\Qt\6.11.1\msvc2022_64\include\QtGui\qguiapplication.h(168,10): warning C4996: 'QCoreApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'Pacticc/x64/Debug/qt/moc/moc_Pacticc.cpp')
+  
+C:\Qt\6.11.1\msvc2022_64\include\QtWidgets\qapplication.h(146,10): warning C4996: 'QGuiApplication::compressEvent': This feature will be removed in Qt 7
+  (compiling source file 'Pacticc/x64/Debug/qt/moc/moc_Pacticc.cpp')
+  
+  Pacticc.vcxproj -> C:\Users\nicut\Desktop\Pacticc\x64\Debug\Pacticc.exe

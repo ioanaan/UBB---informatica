@@ -1,0 +1,4 @@
+1,Fix bug,Ion|Ana,open
+2,Add feature,Mihai,closed
+3,Review,Ion,inprogress
+4,Test task,George,open

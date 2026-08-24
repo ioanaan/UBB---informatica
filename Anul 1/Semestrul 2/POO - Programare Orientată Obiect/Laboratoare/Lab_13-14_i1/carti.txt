@@ -1,0 +1,29 @@
+Ciuleandra_2,Rebreanu,nuvela,1984
+Padurea Spanzuratilor_3,Caragiale,nuvela,1954
+Padurea_4,Caragiale,poezie,1932
+Seara_6,Sadoveanu,roman,1972
+Acasa_7,Calinescu,nuvela,1898
+Morometii_8,Caragiale,roman,1855
+Padurea Spanzuratilor_9,Preda,poezie,1842
+Enigma Otiliei_0,Calinescu,poezie,1856
+Noaptea_1,Calinescu,drama,1850
+Morometii_2,Creanga,drama,1953
+Floare Albastra_3,Creanga,nuvela,1944
+Noaptea_4,Eminescu,nuvela,1958
+Dimineata_5,Slavici,poezie,1968
+Ciuleandra_6,Preda,drama,1897
+Floare Albastra_7,Calinescu,drama,1906
+Baltagul_8,Preda,drama,1937
+Dimineata_9,Slavici,drama,1816
+Harap-Alb_0,Slavici,roman,1826
+Acasa_1,Blaga,roman,1957
+Floare Albastra_0,Camil Petrescu,poezie,1937
+Mara_1,Sadoveanu,drama,1873
+Mara_2,Sadoveanu,roman,1819
+Noaptea_3,Eminescu,nuvela,1816
+Ion_4,Creanga,nuvela,1841
+Harap-Alb_5,Preda,poezie,1873
+Rascoala_6,Preda,drama,1862
+Rascoala_7,Sadoveanu,nuvela,1926
+Padurea_8,Sadoveanu,nuvela,1909
+Harap-Alb_9,Caragiale,poezie,1965

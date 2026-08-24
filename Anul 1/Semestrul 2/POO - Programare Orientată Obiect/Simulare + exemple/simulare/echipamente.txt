@@ -1,0 +1,6 @@
+1,Nike,minge,XL
+2,Adidas,racheta,S
+3,Nike,minge,M
+4,Nike,minge,XL
+5,Adidas,racheta,S
+6,Nike,minge,M

@@ -1,0 +1,11 @@
+1,Fix login bug,Ion|Ana,open
+2,Add dashboard,Mihai|George,inprogress
+3,Write tests,Ana,closed
+4,Fix crash,Ion,open
+5,Code review,George|Ana,inprogress
+6,Deploy v2,Mihai,closed
+7,Update docs,Ion|Mihai,closed
+8,Fix typos,Ana,inprogress
+9,Add dark mode,George,inprogress
+10,Fix payments,Ion|Ana|Mihai,open
+7,fic,,open

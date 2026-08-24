@@ -1,0 +1,161 @@
+Baltagul,Sadoveanu,roman,1930
+Mara,Slavici,roman,1906
+Luceafarul,Eminescu,poezie,1883
+Enigma Otiliei,Calinescu,roman,1938
+Harap-Alb,Creanga,drama,1877
+Floare Albastra,Eminescu,poezie,1873
+Padurea Spanzuratilor,Rebreanu,roman,1922
+Morometii,Preda,roman,1955
+Acasa_0,Preda,nuvela,1998
+Padurea_1,Sadoveanu,poezie,1804
+Seara_2,Camil Petrescu,drama,1814
+Rascoala_3,Sadoveanu,poezie,1816
+Enigma Otiliei_4,Slavici,roman,1995
+Iarna_5,Creanga,nuvela,1965
+Seara_6,Rebreanu,drama,1934
+Rascoala_7,Blaga,drama,1801
+Ion_8,Calinescu,nuvela,1846
+Ion_9,Creanga,nuvela,1970
+Enigma Otiliei_10,Blaga,roman,1903
+Enigma Otiliei_11,Calinescu,roman,1969
+Mara_12,Blaga,roman,1975
+Ultima noapte_13,Blaga,poezie,1841
+Ultima noapte_14,Slavici,roman,1807
+Ciuleandra_15,Blaga,roman,1905
+Luceafarul_16,Creanga,poezie,1852
+Iarna_17,Creanga,drama,1981
+Floare Albastra_18,Sadoveanu,nuvela,1967
+Toamna_19,Preda,nuvela,1832
+Ion_20,Slavici,roman,1894
+Luceafarul_21,Calinescu,roman,1824
+Noaptea_22,Eminescu,drama,1841
+Floare Albastra_23,Blaga,nuvela,1991
+Ion_24,Camil Petrescu,drama,1814
+Ultima noapte_25,Slavici,nuvela,1908
+Morometii_26,Creanga,poezie,1973
+Seara_27,Calinescu,nuvela,1951
+Enigma Otiliei_28,Slavici,poezie,1989
+Iona_29,Blaga,poezie,1968
+Ultima noapte_30,Caragiale,drama,1867
+Noaptea_31,Rebreanu,nuvela,1910
+Harap-Alb_32,Rebreanu,nuvela,1970
+Rascoala_33,Camil Petrescu,drama,1952
+Seara_34,Calinescu,nuvela,1844
+Rascoala_35,Caragiale,roman,1889
+Padurea Spanzuratilor_36,Slavici,poezie,1844
+Floare Albastra_37,Slavici,nuvela,1978
+Ciuleandra_38,Camil Petrescu,roman,1954
+Luceafarul_39,Slavici,drama,1932
+Harap-Alb_40,Creanga,poezie,1967
+Mara_41,Eminescu,roman,1897
+Ion_42,Sadoveanu,nuvela,1899
+Noaptea_43,Rebreanu,roman,1850
+Noaptea_44,Blaga,drama,1839
+Padurea Spanzuratilor_45,Sadoveanu,drama,1978
+Rascoala_46,Creanga,nuvela,1843
+Seara_47,Creanga,poezie,1952
+Acasa_48,Blaga,nuvela,1949
+Iarna_49,Blaga,drama,1974
+Enigma Otiliei_50,Caragiale,roman,1867
+Enigma Otiliei_51,Creanga,drama,1861
+Rascoala_52,Sadoveanu,drama,1919
+Harap-Alb_53,Slavici,roman,1888
+Rascoala_54,Rebreanu,nuvela,1837
+Iona_55,Caragiale,poezie,1940
+Dimineata_56,Sadoveanu,poezie,1845
+Ultima noapte_57,Sadoveanu,poezie,1989
+Iarna_58,Rebreanu,poezie,1833
+Toamna_59,Calinescu,nuvela,1852
+Noaptea_60,Preda,poezie,1815
+Acasa_61,Camil Petrescu,poezie,1927
+Acasa_62,Camil Petrescu,roman,1909
+Seara_63,Creanga,poezie,1836
+Padurea Spanzuratilor_64,Caragiale,roman,1991
+Ion_65,Creanga,roman,1988
+Baltagul_66,Calinescu,drama,1872
+Noaptea_67,Calinescu,roman,1979
+Iarna_68,Camil Petrescu,roman,1895
+Toamna_69,Eminescu,nuvela,1871
+Noaptea_70,Blaga,nuvela,1893
+Iarna_71,Rebreanu,nuvela,1935
+Toamna_72,Sadoveanu,poezie,1824
+Luceafarul_73,Slavici,roman,1984
+Luceafarul_74,Blaga,poezie,1999
+Harap-Alb_75,Rebreanu,poezie,1881
+Dimineata_76,Creanga,roman,1923
+Floare Albastra_77,Blaga,nuvela,1825
+Noaptea_78,Camil Petrescu,poezie,1843
+Padurea Spanzuratilor_79,Creanga,nuvela,1869
+Padurea_80,Camil Petrescu,poezie,1853
+Toamna_81,Blaga,drama,1906
+Padurea Spanzuratilor_82,Creanga,drama,1860
+Harap-Alb_83,Caragiale,drama,1827
+Iarna_84,Slavici,roman,1838
+Baltagul_85,Sadoveanu,poezie,1857
+Luceafarul_86,Slavici,nuvela,1818
+Padurea Spanzuratilor_87,Blaga,poezie,1974
+Toamna_88,Blaga,poezie,1895
+Toamna_89,Creanga,nuvela,1866
+Noaptea_90,Creanga,poezie,1854
+Iarna_91,Preda,drama,1942
+Baltagul_92,Caragiale,drama,1842
+Padurea_93,Creanga,drama,1854
+Toamna_94,Rebreanu,drama,1865
+Toamna_95,Slavici,nuvela,1809
+Harap-Alb_96,Preda,poezie,1834
+Dimineata_97,Camil Petrescu,roman,1995
+Toamna_98,Camil Petrescu,roman,1935
+Padurea Spanzuratilor_99,Camil Petrescu,drama,1963
+Baltagul_100,Sadoveanu,poezie,1803
+Ion_101,Rebreanu,roman,1938
+Ion_102,Creanga,roman,1855
+Padurea_103,Blaga,nuvela,1945
+Toamna_104,Sadoveanu,nuvela,1858
+Iarna_105,Slavici,roman,1803
+Floare Albastra_106,Preda,nuvela,1978
+Iarna_107,Sadoveanu,drama,1908
+Baltagul_108,Calinescu,nuvela,1881
+Ciuleandra_109,Creanga,poezie,1994
+Padurea Spanzuratilor_110,Calinescu,nuvela,1914
+Toamna_111,Camil Petrescu,nuvela,1997
+Mara_112,Slavici,nuvela,1926
+Ultima noapte_113,Preda,poezie,1866
+Noaptea_114,Camil Petrescu,roman,1942
+Baltagul_115,Blaga,roman,1842
+Harap-Alb_116,Blaga,nuvela,1858
+Acasa_117,Eminescu,poezie,1839
+Baltagul_118,Camil Petrescu,roman,1814
+Ciuleandra_119,Preda,poezie,1882
+Iarna_120,Calinescu,drama,1938
+Baltagul_121,Calinescu,poezie,1951
+Rascoala_122,Caragiale,nuvela,1816
+Morometii_123,Creanga,poezie,1803
+Seara_124,Caragiale,drama,1882
+Enigma Otiliei_125,Rebreanu,roman,1829
+Enigma Otiliei_126,Rebreanu,drama,1871
+Enigma Otiliei_127,Sadoveanu,poezie,1991
+Toamna_128,Blaga,poezie,1948
+Noaptea_129,Creanga,roman,1991
+Harap-Alb_130,Sadoveanu,poezie,1904
+Iarna_131,Blaga,roman,1912
+Morometii_132,Blaga,nuvela,1849
+Luceafarul_133,Camil Petrescu,nuvela,1953
+Rascoala_134,Creanga,drama,1927
+Enigma Otiliei_135,Calinescu,poezie,1815
+Morometii_136,Slavici,nuvela,1947
+Ultima noapte_137,Calinescu,nuvela,1965
+Acasa_138,Calinescu,drama,1912
+Seara_139,Caragiale,nuvela,1915
+Enigma Otiliei_140,Eminescu,nuvela,1868
+Toamna_141,Creanga,nuvela,1892
+Acasa_142,Caragiale,poezie,1958
+Harap-Alb_143,Preda,drama,1970
+Enigma Otiliei_144,Camil Petrescu,drama,1949
+Noaptea_145,Creanga,poezie,1977
+Enigma Otiliei_146,Camil Petrescu,roman,1817
+Baltagul_147,Slavici,nuvela,1901
+Baltagul_148,Slavici,drama,1903
+Verity,Cooleen Hoover,roman,2018
+Heartbones,Cooleen Hoover,roman,2015
+Layla,Cooleen Hoover,roman,2020
+Ion,Rebreanu,roman,1920
