@@ -1,0 +1,27 @@
+% Problema 12
+% a) substitue un element cu un altul intr-o lista.
+%
+%  substitue(L, A, B, R)
+%
+%  model de flux: substitue(i, i, i, o)
+%  L - lista de numere
+%  A - elementul ce se vrea a fi inlocuit
+%  B - elementul cu care vreau sa inlocuiesc
+%  R - lista rezultata
+
+substitue([], _, _, []).
+
+substitue([H|T], A, B, [B|R]) :-
+    H =:= A,
+    substitue(T, A, B, R).
+
+substitue([H|T], A, B, [H|R]) :-
+    H =\= A,
+    substitue(T, A, B, R).
+
+
+
+
+
+
+
